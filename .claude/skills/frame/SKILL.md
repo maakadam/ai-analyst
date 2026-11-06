@@ -76,9 +76,10 @@ Framed: <the question after framing, in clean wording>
 
 1. Check the requirements against what you know: can the tables measure what would change the decision, does the window end before the analysis date, which quirks apply, and what is not known yet. If no table fits, ask: reframe or stop.
 2. Draft the frame. Mark anything you added as "Analyst suggestion: <what> (<why>)".
-3. Ask a peer, as you would a colleague in the office. Start a fresh agent with only a pitch of three or four sentences: "I've been asked <Question> so <Audience> can decide <Decision>. I'm thinking of looking at <what would change the decision> in <tables> over <window>. Makes sense?" Ask it to reply "Makes sense" or at most three "Have you thought about...?" lines, and to open no files.
-4. Ask for approval with AskUserQuestion. Put the peer's reply in the question text and the frame in the first option's preview: "Approve the frame", "Change a field", or "Stop" if much is unknown. Change nothing because of the peer's reply unless the user asks.
-5. On approval, write `outputs/<date>_<slug>/frame.md`, with the real date from `date +%F`. If the folder already holds more than `frame.md`, ask before overwriting.
+3. Propose the splits the question needs, even when the user named none. For any retention, churn, conversion, pricing or revenue question, always suggest tenure (time since the customer started) and start cohort, so that customers are compared with others at the same stage, plus plan and the customer attributes the table notes list. Put them under Population as analyst suggestions, each with one line on why it could change the decision.
+4. Ask a peer, as you would a colleague in the office. Start a fresh agent with only a pitch of three or four sentences: "I've been asked <Question> so <Audience> can decide <Decision>. I'm thinking of looking at <what would change the decision> in <tables> over <window>. Makes sense?" Ask it to reply "Makes sense" or at most three "Have you thought about...?" lines, and to open no files.
+5. Ask for approval. First show the draft frame and the peer's reply as plain text in your message, because option previews do not show on every device. Then ask with AskUserQuestion: "Approve the frame", "Change a field", or "Stop" if much is unknown. Change nothing because of the peer's reply unless the user asks. If the answer is neither an approval nor a change, ask once more; never take silence as approval.
+6. On approval, write `outputs/<date>_<slug>/frame.md`, with the real date from `date +%F`. If the folder already holds more than `frame.md`, ask before overwriting.
 
 ## Deliver
 
@@ -96,5 +97,6 @@ Keep it under ten lines. Do not paste the note into the CLI.
 
 - **The decision comes before the data.** No decision, no frame.
 - **The user decides; the analyst advises.** Ask for what only the user knows, and label what you add.
+- **Like with like.** Suggest the splits that make a fair comparison (tenure, cohort) before the user has to ask for them.
 - **Names, not data.** Frame reads the knowledge folder, never the CSVs.
 - **The headings are a contract.** Spell them exactly.
