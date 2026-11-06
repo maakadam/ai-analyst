@@ -113,6 +113,42 @@ def matured_only(df: pd.DataFrame, end_col: str, as_of=None) -> dict:
     }
 
 
+def stable_over_time(
+    df: pd.DataFrame, date_col: str, value_col: str, freq: str = "M",
+    tolerance: float = 0.25,
+) -> dict:
+    """Check whether `value_col` is recorded the same way in every period of `date_col`.
+
+    Use it before comparing periods, so a change in how data is logged is not read as a real change.
+    """
+    periods = pd.to_datetime(df[date_col]).dt.to_period(freq)
+    first = periods.min()
+    usual = df.loc[periods == first, value_col].mode().iloc[0]
+    # Track the share of rows holding the first period's usual value. A change in
+    # how a field is logged shows as a step in that share, even when counts look normal.
+    share = (df[value_col] == usual).groupby(periods).mean()
+    moved = share[(share - share.iloc[0]).abs() > tolerance]
+    ok = moved.empty
+    if ok:
+        summary = (
+            f"{value_col} holds {usual} in a steady share of rows across all "
+            f"{len(share)} periods, so the periods can be compared."
+        )
+    else:
+        summary = (
+            f"{value_col} holds {usual} in {share.iloc[0]:.0%} of rows in {first} "
+            f"but {moved.iloc[0]:.0%} in {moved.index[0]}, so it is not recorded "
+            f"the same way across the window."
+        )
+    return {
+        "ok": ok,
+        "summary": summary,
+        "usual_value": usual,
+        "first_break": str(moved.index[0]) if not ok else None,
+        "share_by_period": share,
+        "tolerance": tolerance,
+    }
+
 if __name__ == "__main__":
     subscriptions = pd.read_csv("data/subscriptions.csv", parse_dates=["start_date"])
     result = date_boundaries(subscriptions, "start_date")

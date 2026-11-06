@@ -1,15 +1,24 @@
 ---
 name: deliver
-description: Writes the brief for a checked analysis in a run folder (the recommendation, key takeaways, findings with charts, how it was done, and what was and was not checked) for the audience named in the frame. Every number comes from a result CSV. Use after validate. Writes brief.md into the run folder.
+description: Writes the brief for a checked analysis in a run folder (a clear recommendation, key takeaways, findings with charts, and an appendix with sources and checks) for the audience named in the frame. Built from the frame and the analysis outputs; the review only gates it and sets its limits. Every number comes from a result CSV. Use after validate. Writes brief.md into the run folder.
 user-invocable: true
 context: fork
 allowed-tools: Read Bash Glob Grep Write
 argument-hint: "[path to the run folder under outputs/]"
 ---
 
-You turn a checked analysis into a brief people can act on and question.
+You turn a checked analysis into a brief a business stakeholder can act on in two minutes, and an analyst can still question.
 
-The failure you exist to prevent: the review limited how far a result could go. The brief stated the result without the limit, in clean prose with a good chart, and the reader acted on it. The numbers were right. The limit was lost on the way to the reader.
+Three inputs, in this order of weight:
+
+- **The frame** (`frame.md`) sets what the brief must answer: the decision, the audience, and what would change the decision.
+- **The analysis outputs** (the result CSVs in `data/`, the charts in `charts/`, and `analysis.py` for what each table measures) supply the answer. The story of the brief comes from here.
+- **The review** (`review.md`) gates the brief and sets its limits: how far each claim can go, and what is not verified. It never sets the story.
+
+Two failures you exist to prevent:
+
+- **The limit got lost.** A result only held within limits. The brief stated the result without the limit, and the reader acted on it.
+- **The answer got lost.** The brief was built around the review: every finding code, every caveat, every file, ending on "it depends on which measure you use". The reader finished it and still did not know what to do.
 
 ## What this is NOT
 
@@ -19,11 +28,10 @@ The failure you exist to prevent: the review limited how far a result could go. 
 
 ## The readers
 
-One brief serves three readers, in layers.
+One brief serves two readers, in two parts.
 
-- **The decider** reads only the Recommendation and Key Takeaways. Those must stand alone.
-- **The reviewer** reads everything and questions it. Every claim shows its number, its comparison, its source and its limit.
-- **The analyst** wants to rerun or extend it. How this was done and the Source lines lead to the code and the CSVs.
+- **The decider** reads the body: Recommendation, Key Takeaways, Findings. It is written for them alone, in business words. No finding codes (A1, C2), no file names, no section names of the script, no column names.
+- **The reviewer or analyst** reads the Appendix: sources, method, checks, and every review finding by its code.
 
 ## The brief
 
@@ -33,40 +41,42 @@ You write `outputs/<run>/brief.md` with exactly these headings. Other skills rea
 # Brief: <short title>
 
 ## Question
-<the question and the decision it informs, in one or two sentences>
+<the decision, in one sentence, in the audience's words>
 
 ## Recommendation
-<what to do, and where it holds; conditional if a question is open>
-<how sure, in plain words, and why>
-Next step: <what would settle what is still open>
+**<one sentence: what to do>**
+<one or two sentences: why, with at most two numbers>
+<how sure, in plain words: confident / fairly confident / tentative, and the main reason>
+<one line: what would change this recommendation>
 
 **Open for you**
-- <one question per Needs the user finding, that the reader can answer>
+- <at most two questions, only ones that need the decider's judgement>
 
 ## Key Takeaways
-- <three to five lines, each a number with its comparison>
+- <three lines, each one plain sentence with at most one or two numbers and their comparison>
 
 ## Findings
-### <finding as a claim>
+### <finding as a claim in plain words>
 ![<what the chart shows>](charts/<name>.png)
-or
-**<the number>** against <its comparison>
-- <what it means for the decision, or the limit on it>
-- <one more line, only if needed>
+- <what it means for the decision>
+- <its limit, if one changes how far it goes>
 
-Source: data/<file>.csv, analysis.py (<section>)
-
-## How this was done
+## Appendix
+### How this was done
 - <data, population, window, measure and comparison, in plain words>
 
-## Checks
+### Sources
+- <each finding title>: data/<file>.csv, analysis.py (<section>)
+
+### Checks
 - Checked: <...>
 - Not checked: <...>
 - Out of scope: <...>
-- Not verified: <finding number and one line>
+- Review findings: <code> <label>: <one line on how it was handled, or "not verified">
 ```
 
-- Leave out Next step, Open for you and a chart when there is nothing to put there.
+- Leave out Open for you and a chart when there is nothing to put there.
+- At most three Findings. Each leads with a chart, or one bold number against its comparison when no chart fits.
 
 ## Act 1: Read the run (the gate)
 
@@ -74,23 +84,30 @@ Source: data/<file>.csv, analysis.py (<section>)
 2. It needs `frame.md`, `analysis.py`, `data/` and `review.md`. If one is missing, stop and say which skill to run: /analyse or /validate.
 3. If the verdict in `review.md` is Fix first, stop: "The numbers cannot be trusted yet; fix the findings in review.md first."
 
-## Act 2: Check the results answer the frame
+## Act 2: Decide what you are recommending
 
-1. Read `frame.md`, `review.md`, and what you need from `data/` and `charts/` to answer the frame.
-2. For each part of What would change the decision, mark it answered, partly answered or not answered. Check the Population and the Analysis window the same way.
-3. If nothing answers the decision, stop: "The results do not answer <decision>; run /analyse again."
-4. Answer the Question in one sentence before writing anything.
+1. Read `frame.md`: the Question, the Decision it informs, the Audience and What would change the decision. This is what the brief must answer.
+2. Read the analysis outputs: the result CSVs in `data/`, the charts in `charts/`, and `analysis.py` for what each table measures and which comparison it carries.
+3. For each part of What would change the decision, mark it answered, partly answered or not answered from those outputs.
+4. If nothing answers the decision, stop: "The results do not answer <decision>; run /analyse again."
+5. Write the answer to the Question in one sentence, then the action it implies. This is the recommendation.
+6. Only now read the findings in `review.md`, for two things: limits that change how far a claim goes (they go next to that claim, in plain words) and gaps that lower how sure you are. A finding that changes neither goes to the Appendix only.
+7. **Pick a course.** Open questions do not make a recommendation conditional by default. Recommend what the evidence best supports today, say how sure you are, and put what would change it in one line. Only when the evidence points both ways with nothing to break the tie, say so and recommend the cheapest next step that would break it.
+8. Sort the open questions. One that the data could answer (a horizon, a cut, a baseline) is a gap in the analysis: it goes in the Appendix as not verified and lowers how sure you are; it is never handed to the decider. Only a question that needs the decider's judgement or knowledge (a target, a risk appetite, another change they know of) goes under Open for you.
 
 ## Act 3: Write the brief
 
 1. Write `outputs/<run>/brief.md` from the template. Overwrite an older one.
+2. Round every number the same way: rates to one decimal place in percent, changes in percentage points to one decimal, relative change to whole percent, money to the nearest thousand.
+3. Explain each term the first time it appears ("churn: the share of subscribers who cancel in a month").
 
 ## Act 4: Read it before saving
 
 1. Find each number in the brief in a CSV in `data/`. Fix or remove any you cannot find.
-2. Read only the Recommendation and Key Takeaways. They lead to the same decision as the full brief, limits included.
-3. The recommendation follows from the findings, and no finding argues against it.
-4. Every Needs the user and Small fix finding in `review.md` appears once in the brief.
+2. Read only the Recommendation and Key Takeaways, as the decider would. They say what to do, how sure, and the limit that matters, with nothing to look up.
+3. Count: the body has no finding codes, file names or column names, at most two numbers in the Recommendation, at most two per takeaway.
+4. The recommendation follows from the findings, and no finding argues against it.
+5. Every Needs the user and Small fix finding in `review.md` appears once in the Appendix.
 
 ## Deliver
 
@@ -104,12 +121,12 @@ Keep it under five lines. Do not paste the brief into the CLI.
 
 ## Principles
 
-- **Answer first.** The decision the frame asked about comes before how you got there. What the results cannot answer is said in the Recommendation, and the recommendation does not lean on it.
-- **Say how sure, in plain words.** Weigh the size of the result against its comparison and its noise, how many people are behind it, whether it holds across groups, whether it is cause or coincidence, and whether it is big enough to change the decision. Let the words match.
-- **Open questions shape the recommendation.** A Needs the user finding makes it conditional and becomes a question under Open for you. A Small fix is listed as not verified. A Note appears only if it limits a claim.
-- **Limits travel with the claim.** A limit that changes how far a claim goes sits next to it, once.
-- **Cut hard.** Three to five takeaways. Leave out dead ends and anything that does not bear on the decision.
+- **Frame asks, analysis answers, review limits.** The brief is built from the frame and the analysis outputs. The review decides whether it ships and how far each claim goes, not what it says.
+- **Answer first, and commit.** The decider asked what to do. Say it, say how sure, say what would change it. "It depends" is not a recommendation.
+- **Business words in the body, references in the Appendix.** The decider never needs a file name or a finding code to follow the argument.
+- **Few numbers, each with its comparison.** A number that does not move the decision stays in the Appendix or out.
+- **Limits travel with the claim.** A limit that changes how far a claim goes sits next to it, once, in plain words.
+- **The analyst's gaps are not the decider's homework.** A question the data could answer is a gap to close, not a question to ask.
 - **Show, then say.** Each finding leads with one chart or one number, then one or two short bullets. No paragraphs.
-- **One message per chart.** Use a chart only when it carries a claim, and say what it shows.
-- **Every number has a home.** It comes from a CSV, with its comparison and its unit (percentage points or relative percent), rounded the same way throughout. If the comparison is not in the CSVs, drop the number; never work it out.
-- **Plain words.** Explain each term the first time it appears. No em dashes.
+- **Every number has a home.** It comes from a CSV. If the comparison is not in the CSVs, drop the number; never work it out.
+- **Plain words.** No em dashes.
