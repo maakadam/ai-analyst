@@ -1,8 +1,8 @@
 ---
 name: frame
-description: Frames a business question before any data is touched: the decision it informs, who decides, what would change the decision, the tables likely involved and the analysis window, then checks them against what is known about the data and gets the user's approval. Use at the start of every analysis, before profile or analyse. Writes frame.md into a new run folder under outputs/.
+description: Frames a business question before any data is touched (the decision it informs, who decides, what would change the decision, the tables likely involved and the analysis window), then checks them against what is known about the data and gets the user's approval. Use at the start of every analysis, before profile or analyse. Writes frame.md into a new run folder under outputs/.
 user-invocable: true
-allowed-tools: Read Bash Write Edit AskUserQuestion
+allowed-tools: Read Bash Write Edit AskUserQuestion Agent
 argument-hint: "<the business question>"
 ---
 
@@ -76,8 +76,9 @@ Framed: <the question after framing, in clean wording>
 
 1. Check the requirements against what you know: can the tables measure what would change the decision, does the window end before the analysis date, which quirks apply, and what is not known yet. If no table fits, ask: reframe or stop.
 2. Draft the frame. Mark anything you added as "Analyst suggestion: <what> (<why>)".
-3. Ask for approval with AskUserQuestion, with the frame in the first option's preview: "Approve the frame", "Change a field", or "Stop" if much is unknown.
-4. On approval, write `outputs/<date>_<slug>/frame.md`, with the real date from `date +%F`. If the folder already holds more than `frame.md`, ask before overwriting.
+3. Ask a peer, as you would a colleague in the office. Start a fresh agent with only a pitch of three or four sentences: "I've been asked <Question> so <Audience> can decide <Decision>. I'm thinking of looking at <what would change the decision> in <tables> over <window>. Makes sense?" Ask it to reply "Makes sense" or at most three "Have you thought about...?" lines, and to open no files.
+4. Ask for approval with AskUserQuestion. Put the peer's reply in the question text and the frame in the first option's preview: "Approve the frame", "Change a field", or "Stop" if much is unknown. Change nothing because of the peer's reply unless the user asks.
+5. On approval, write `outputs/<date>_<slug>/frame.md`, with the real date from `date +%F`. If the folder already holds more than `frame.md`, ask before overwriting.
 
 ## Deliver
 
