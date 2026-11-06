@@ -106,7 +106,7 @@ Judge whether the code is sound overall. Skip style and small details.
 The code can be right and the data underneath it can still change meaning halfway through the window. Test the inputs, not just the script.
 
 1. List the fields the headline metric depends on: the outcome date (for example `end_date`), status values, amounts, and any gap the metric relies on (for example days from the last payment to the end).
-2. For each, run `helpers.checks.stable_over_time` over the whole analysis window, from the repo root with a scratch script under `outputs/<run>/rerun/`. Pass a derived column as `value_col` when the meaning sits in a gap or a relation between tables. Print only its `summary` and `breaks`.
+2. For each, run `helpers.checks.stable_over_time` over the whole analysis window, from the repo root with a scratch script under `outputs/<run>/rerun/`. Pass a derived column as `value_col` when the meaning sits in a gap or in the timestamp itself, for example days from the last payment to the end date, or whether the end date carries a time of day. Print only its `summary`.
 3. A break inside any compared window means the baseline is not like for like. Name the period and the metric, and say which baselines stay clean.
 4. Check that each compared period has enough people behind it and that the mix of groups did not shift between periods (a signup spike, a new channel).
 

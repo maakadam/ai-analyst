@@ -114,60 +114,40 @@ def matured_only(df: pd.DataFrame, end_col: str, as_of=None) -> dict:
 
 
 def stable_over_time(
-    df: pd.DataFrame, date_col: str, value_col: str | None = None, freq: str = "M",
-    tolerance: float = 0.25, min_rows: int = 20,
+    df: pd.DataFrame, date_col: str, value_col: str, freq: str = "M",
+    tolerance: float = 0.25,
 ) -> dict:
-    """Check that a field is recorded the same way in every period, so periods can be compared.
+    """Check whether `value_col` is recorded the same way in every period of `date_col`.
 
-    Use it before choosing a baseline: a change in how a date or value is recorded
-    (time of day appearing, a fixed gap giving way to a spread) looks like a real change.
-    Per period it measures the share of `date_col` values carrying a time of day and, for
-    `value_col`, the null rate and the share equal to the most common value of the first
-    full period. A period is a break when a share moves more than `tolerance` (absolute)
-    from the median of all earlier periods. Periods with fewer than `min_rows` rows are skipped.
+    Use it before comparing periods, so a change in how data is logged is not read as a real change.
     """
-    d = df.copy()
-    dates = pd.to_datetime(d[date_col])
-    d = d[dates.notna()]
-    dates = dates[dates.notna()]
-    d["_period"] = dates.dt.to_period(freq)
-    d["_has_time"] = dates != dates.dt.normalize()
-    metrics = {"share_with_time_of_day": "_has_time"}
-    if value_col is not None:
-        d["_null"] = d[value_col].isna()
-        metrics["null_rate"] = "_null"
-    counts = d.groupby("_period").size()
-    periods = [p for p in counts.index if counts[p] >= min_rows]
-    d = d[d["_period"].isin(periods)]
-    if value_col is not None and periods:
-        first = d[d["_period"] == periods[0]][value_col].dropna()
-        if len(first):
-            mode = first.mode().iloc[0]
-            d["_is_mode"] = d[value_col] == mode
-            metrics[f"share_equal_to_{mode}"] = "_is_mode"
-    table = d.groupby("_period")[list(metrics.values())].mean()
-    table.columns = list(metrics.keys())
-    table.insert(0, "rows", d.groupby("_period").size())
-
-    breaks = []
-    for name in metrics:
-        series = table[name]
-        for i in range(1, len(series)):
-            baseline = series.iloc[:i].median()
-            if abs(series.iloc[i] - baseline) > tolerance:
-                breaks.append({"metric": name, "period": str(series.index[i]),
-                               "before": round(float(baseline), 3),
-                               "value": round(float(series.iloc[i]), 3)})
-                break
-    if breaks:
-        summary = f"{date_col} is not recorded the same way throughout: " + "; ".join(
-            f"{b['metric']} moved from {b['before']:.2f} to {b['value']:.2f} in {b['period']}"
-            for b in breaks) + ". Do not compare periods across that break without explaining it."
+    periods = pd.to_datetime(df[date_col]).dt.to_period(freq)
+    first = periods.min()
+    usual = df.loc[periods == first, value_col].mode().iloc[0]
+    # Track the share of rows holding the first period's usual value. A change in
+    # how a field is logged shows as a step in that share, even when counts look normal.
+    share = (df[value_col] == usual).groupby(periods).mean()
+    moved = share[(share - share.iloc[0]).abs() > tolerance]
+    ok = moved.empty
+    if ok:
+        summary = (
+            f"{value_col} holds {usual} in a steady share of rows across all "
+            f"{len(share)} periods, so the periods can be compared."
+        )
     else:
-        summary = f"{date_col} looks recorded the same way in all {len(table)} periods checked."
-    return {"ok": not breaks, "summary": summary, "breaks": breaks,
-            "table": table.reset_index().rename(columns={"_period": "period"})}
-
+        summary = (
+            f"{value_col} holds {usual} in {share.iloc[0]:.0%} of rows in {first} "
+            f"but {moved.iloc[0]:.0%} in {moved.index[0]}, so it is not recorded "
+            f"the same way across the window."
+        )
+    return {
+        "ok": ok,
+        "summary": summary,
+        "usual_value": usual,
+        "first_break": str(moved.index[0]) if not ok else None,
+        "share_by_period": share,
+        "tolerance": tolerance,
+    }
 
 if __name__ == "__main__":
     subscriptions = pd.read_csv("data/subscriptions.csv", parse_dates=["start_date"])
