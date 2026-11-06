@@ -1,0 +1,2 @@
+_all,at_risk_after,churned_after,at_risk_before,churned_before,rate_before_std,rate_after,rate_before_crude,change_pp,change_rel_pct,rel_low_pct,rel_high_pct,lifetime_rev_ratio,below_breakeven,clearly_below
+all,32307,1697,51784,855,0.015517923127251785,0.05252731606153465,0.01651089139502549,3.700939293428286,238.49449846345001,211.78309072983868,267.4943539170484,0.3545109316243654,True,True
