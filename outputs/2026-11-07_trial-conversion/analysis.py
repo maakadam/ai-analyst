@@ -149,6 +149,47 @@ lift = pd.DataFrame([
 ])
 # No "started by 2026-09-24" sensitivity: most non-trial payers in the window start on the
 # 2026-09-25 batch start date (review A2), so that cut measures timing, not conversion.
+
+# Are plans on a batched, not-yet-started row firm? (review A1). Start dates are set in batches
+# (quirk "Batched start dates"); check how many paid plans on the earlier batch days were charged.
+pays_first = pays.merge(subs[["subscription_id", "start_date"]], on="subscription_id")
+pays_first["day"] = (pays_first.payment_date.dt.normalize() - pays_first.start_date.dt.normalize()).dt.days
+charged_ids = set(pays_first[(pays_first.day >= 0) & (pays_first.day <= 5)].subscription_id)
+d["charged_at_start"] = d.subscription_id.isin(charged_ids)
+d["start_day"] = d.start_date.dt.normalize()
+firm_rows = []
+for day in ["2025-09-17", "2026-07-30", "2026-09-25"]:
+    g = d[(d.start_day == day) & d.paid]
+    firm_rows.append({"batch_start_day": day, "paid_plans": len(g),
+                      "charged_at_start": int(g.charged_at_start.sum()),
+                      "share_charged": g.charged_at_start.mean(),
+                      "signups_from": g.signup_day.min().date(), "signups_to": g.signup_day.max().date(),
+                      "charge_observable_by_2026_09_24": pd.Timestamp(day) <= TODAY})
+firm = pd.DataFrame(firm_rows)
+firm.to_csv(OUT / "batch_start_firmness.csv", index=False)
+past = firm[firm.charge_observable_by_2026_09_24]
+worst_firm = past.share_charged.min()
+for _, r in firm.iterrows():
+    say(f"Batch start {r.batch_start_day}: {r.share_charged:.1%} of {r.paid_plans:,} paid plans charged at start "
+        f"(signups {r.signups_from} to {r.signups_to})")
+
+# Sensitivity 1: non-trial plans not yet started are paid only at the worst past batch rate.
+nt_started = int(non_grp.paid_started.sum())
+nt_sched = int(non_grp.scheduled_paid.sum())
+pn_low = (nt_started + worst_firm * nt_sched) / len(non_grp)
+lift.loc[len(lift)] = {"comparison": f"Sensitivity: trial vs non-trial, plans not yet started firm at {worst_firm:.0%} (worst past batch)",
+                       "trial_share": pt, "comparison_share": pn_low, "diff_pp": 100 * (pt - pn_low),
+                       "diff_pp_ci_low": np.nan, "diff_pp_ci_high": np.nan, "relative_pct": 100 * (pt / pn_low - 1)}
+# Sensitivity 2: Mar-Jul 2026 baseline counting only plans charged at start (no unpaid plans).
+pb_charged = (base.paid & base.subscription_id.isin(charged_ids)).sum() / len(base)
+_, lo_b, hi_b = share_ci((base.paid & base.subscription_id.isin(charged_ids)).sum(), len(base))
+se_b = np.sqrt(pt * (1 - pt) / nt + pb_charged * (1 - pb_charged) / len(base))
+lift.loc[len(lift)] = {"comparison": "Sensitivity: trial vs Mar-Jul 2026 signups, charged plans only",
+                       "trial_share": pt, "comparison_share": pb_charged, "diff_pp": 100 * (pt - pb_charged),
+                       "diff_pp_ci_low": 100 * (pt - pb_charged - 1.96 * se_b),
+                       "diff_pp_ci_high": 100 * (pt - pb_charged + 1.96 * se_b),
+                       "relative_pct": 100 * (pt / pb_charged - 1)}
+say(f"Trial users charged at start: {trial_grp.subscription_id.isin(charged_ids).sum()} of {int(trial_grp.paid.sum())} converts")
 lift.to_csv(OUT / "lift.csv", index=False)
 for _, r in main.iterrows():
     say(f"{r.group}: {r.paid_share:.1%} end up paid ({r.paid:,} of {r.signups:,}; 95% CI {r.ci_low:.1%} to {r.ci_high:.1%})")

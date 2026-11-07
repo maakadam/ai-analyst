@@ -12,12 +12,18 @@ Last signup day with a matured trial: 2026-09-10.
 paid (share True) shows no lasting step beyond 10% of its recent level across all 21 periods; largest step 37% to 44% in 2025-02, so the periods can be compared.
 
 == Main comparison: signups 2026-08-01 to 2026-09-10 ==
+Batch start 2025-09-17: 83.0% of 1,385 paid plans charged at start (signups 2025-06-22 to 2025-09-17)
+Batch start 2026-07-30: 100.0% of 403 paid plans charged at start (signups 2026-05-01 to 2026-07-29)
+Batch start 2026-09-25: 0.0% of 582 paid plans charged at start (signups 2026-07-30 to 2026-09-24)
+Trial users charged at start: 828 of 828 converts
 Trial users: 53.3% end up paid (828 of 1,553; 95% CI 50.8% to 55.8%)
 Non-trial signups, same days: 39.2% end up paid (589 of 1,503; 95% CI 36.8% to 41.7%)
 Signups Mar-Jul 2026 (before trials): 39.4% end up paid (1,316 of 3,338; 95% CI 37.8% to 41.1%)
 Trial vs non-trial, same days: +14.1 percentage points, 95% CI +10.6 to +17.6 pp; +36.1% relative
 Trial vs Mar-Jul 2026 signups: +13.9 percentage points; +35.2% relative
 Non-trial (same days) vs Mar-Jul 2026 signups: -0.2 percentage points; -0.6% relative
+Sensitivity: trial vs non-trial, plans not yet started firm at 83% (worst past batch): +18.2 percentage points; +51.8% relative
+Sensitivity: trial vs Mar-Jul 2026 signups, charged plans only: +14.1 percentage points, 95% CI +11.1 to +17.1 pp; +36.0% relative
 
 == Weekly ==
 Baseline weekly paid share (Mar-Jul 2026, 21 full weeks): 33.6% to 47.4%
