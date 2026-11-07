@@ -49,7 +49,6 @@ These hold in every act.
 Write three to six bullets describing the computation. The plan must say:
 
 - Who is compared: the size of each group and its base rate for the outcome, after the same filters the answer uses. Compute them first, in the script, and save them to `data/baseline.csv` (at least `group`, `users` and the base rate; add more columns only when the question needs them). If a group is too small to trust, merge it or name it as thin. Skip this when the question compares no groups.
-
 - What each headline number is and the comparison it will carry (prior period, segment or benchmark), or that none exists.
 - How each applicable quirk is handled. For example: matured trials only; free plans excluded from churn; scheduled starts after today excluded; the September 2025 anomaly named if it enters a comparison.
 - Which segments you will split by and why.
@@ -75,7 +74,6 @@ Run it from the repo root with `poetry run python outputs/<run>/analysis.py`. If
 ## Act 5: Report
 
 On the CLI, report:
-
 
 - Each headline number with its comparison, stated as percentage points or relative percent, saying which.
 - What was segmented and why.
