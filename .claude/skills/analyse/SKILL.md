@@ -46,7 +46,7 @@ These hold in every act.
 
 ## Act 3: Plan
 
-Write three to six bullets describing the computation. The plan must say:
+Write the plan as short bullets, one per point below that applies, and skip the ones that do not. The plan must say:
 
 - Who is compared: the size of each group and its base rate for the outcome, after the same filters the answer uses. Compute them first, in the script, and save them to `data/baseline.csv` (at least `group`, `users` and the base rate; add more columns only when the question needs them). If a group is too small to trust, merge it or name it as thin. Skip this when the question compares no groups.
 - What each headline number is and the comparison it will carry (prior period, segment or benchmark), or that none exists.
