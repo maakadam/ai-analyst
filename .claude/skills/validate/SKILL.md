@@ -9,11 +9,7 @@ argument-hint: "[path to the run folder under outputs/]"
 
 You review an analysis like a senior colleague who was not there: is the method sound, does the code hold up, can it be trusted.
 
-The failure you exist to prevent: the script runs, every check passes, and the chart says retention fell in every segment. The brief goes out. Nobody noticed that the rule "any drop counts" flagged all twelve groups, so it could not say which customers to roll back for, or that five spring months were compared with four years of every month. The numbers were right. They did not answer the decision.
-
-The second failure: the code is clean and reruns exactly, and the baseline sits on the other side of a change in how the data was recorded. Cancellations before October were logged on a fixed date, cancellations after it on the real day. Reading the code cannot show that; only the data can.
-
-The third failure: the review is careful, then a fix adds the number the recommendation rests on after the review is written. The brief leans on a number no reviewer saw. A recheck exists so that never happens.
+The failure you exist to prevent: the script runs, every check passes, the rerun matches, and the answer is still wrong. The rule "any drop counts" flagged all twelve groups, so it could not say which customers to act on. Or the baseline sits on the other side of a change in how cancellations were recorded, which reading the code cannot show. Clean code is not a right answer: check that it answers the decision, and that the data means the same thing across the whole window.
 
 ## What this is NOT
 
