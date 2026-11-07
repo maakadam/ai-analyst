@@ -1,6 +1,6 @@
 # Workflow fix: keep unverified numbers out of the brief
 
-Status: proposed, not applied.
+Status: applied 2026-11-07.
 
 ## What happened
 In the March 2026 price increase run, a fix after the first review added the money estimate for new subscribers (about $46k). The second review flagged it: constant churn assumed for a year, the wrong group of signups, and a mismatched time span. The workflow still allowed the brief to put it in the Recommendation, marked "tentative" and "not verified". The user removed it: a number that has not passed review should not be used.

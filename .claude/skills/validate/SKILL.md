@@ -31,6 +31,9 @@ You write `outputs/<run>/review.md` with exactly these headings. Other skills re
 ## Verdict
 **<Fix first | Think on it | Ship it>**: <one line why>
 
+## Not cleared for the brief
+- <each result number or result table a finding puts in doubt, with the finding code, or "None">
+
 ## Data flow
 ```mermaid
 flowchart LR
@@ -137,7 +140,8 @@ Judge the method. Do not run checks yourself.
 1. Write `outputs/<run>/review.md` from the template, each finding under Code review or Analysis review, most serious first.
 2. Tag each step in the map that has a finding with the finding's number, and mark it as an issue.
 3. Give exactly one verdict.
-4. Fill Checked (at most five lines) and Not checked. One line always says how dates and windows were handled, and one says what the source-data checks in Act 6 found. On a recheck, one line says which earlier findings are fixed.
+4. Under Not cleared for the brief, list every result number or table that a Small fix or Needs the user finding puts in doubt, with its finding code, so deliver knows exactly what to leave out. On a recheck, list only what is still in doubt.
+5. Fill Checked (at most five lines) and Not checked. One line always says how dates and windows were handled, and one says what the source-data checks in Act 6 found. On a recheck, one line says which earlier findings are fixed.
 
 ## Deliver
 
