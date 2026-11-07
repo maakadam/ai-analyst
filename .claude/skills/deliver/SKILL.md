@@ -12,7 +12,7 @@ You turn a checked analysis into a brief a business stakeholder can act on in tw
 Three inputs, in this order of weight:
 
 - **The frame** (`frame.md`) sets what the brief must answer: the decision, the audience, and what would change the decision.
-- **The analysis outputs** (the result CSVs in `data/`, including `baseline.csv` with the groups compared, the charts in `charts/`, and `analysis.py` for what each table measures) supply the answer. The story of the brief comes from here.
+- **The analysis outputs** (the result CSVs in `data/`, the charts in `charts/`, and `analysis.py` for what each table measures) supply the answer. The story of the brief comes from here.
 - **The review** (`review.md`) gates the brief and sets its limits: how far each claim can go, and what is not verified. It never sets the story.
 
 Two failures you exist to prevent:
@@ -30,7 +30,7 @@ Two failures you exist to prevent:
 
 One brief serves two readers, in two parts.
 
-- **The decider** reads the body: Recommendation, Key Takeaways, The groups we compared, Findings. It is written for them alone, in business words. No finding codes (A1, C2), no file names, no section names of the script, no column names.
+- **The decider** reads the body: Recommendation, Key Takeaways, Findings. It is written for them alone, in business words. No finding codes (A1, C2), no file names, no section names of the script, no column names.
 - **The reviewer or analyst** reads the Appendix: sources, method, checks, and every review finding by its code.
 
 ## The brief
@@ -55,13 +55,6 @@ You write `outputs/<run>/brief.md` with exactly these headings. Other skills rea
 ## Key Takeaways
 - <three lines, each one plain sentence with at most one or two numbers and their comparison>
 
-## The groups we compared
-<one sentence: who is compared and why these groups>
-
-| Group | Users | <outcome> rate |
-|---|---|---|
-| <group> | <n> | <rate> |
-
 ## Findings
 ### <finding as a claim in plain words>
 ![<what the chart shows>](charts/<name>.png)
@@ -83,7 +76,6 @@ You write `outputs/<run>/brief.md` with exactly these headings. Other skills rea
 ```
 
 - Leave out Open for you and a chart when there is nothing to put there.
-- Include The groups we compared only when `data/baseline.csv` exists: two or three rows from it, so Findings can refer back to the groups and their sizes.
 - At most three Findings. Each leads with a chart, or one bold number against its comparison when no chart fits.
 
 ## Act 1: Read the run (the gate)

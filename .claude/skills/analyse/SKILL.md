@@ -46,16 +46,12 @@ These hold in every act.
 
 ## Act 3: Plan
 
-Write the plan as short bullets, one per point below that applies, and skip the ones that do not. The plan must say:
+Write three to six bullets describing the computation. The plan must say:
 
-- Who is compared: the size of each group and its base rate for the outcome, after the same filters the answer uses. Compute them first, in the script, and save them to `data/baseline.csv` (at least `group`, `users` and the base rate; add more columns only when the question needs them). If a group is too small to trust, merge it or name it as thin. Skip this when the question compares no groups.
 - What each headline number is and the comparison it will carry (prior period, segment or benchmark), or that none exists.
 - How each applicable quirk is handled. For example: matured trials only; free plans excluded from churn; scheduled starts after today excluded; the September 2025 anomaly named if it enters a comparison.
 - Which segments you will split by and why.
 - Which checks the script will run.
-- When the decision has a money side: the money at stake for the whole affected group over a stated period, next to any per-customer figure or index. The decider weighs it against the cost of acting.
-- When a projection goes past the months observed: the answer over the months observed next to it, and a test that the projected rate has held. Say whether it is steady, fading or still rising.
-- When the recommendation could act on a group going forward: whether that group is still made of the same people (a new source feeding it, a jump in volume, a shift in mix), saved as a result table.
 
 Show the plan before writing the script.
 
@@ -93,4 +89,3 @@ Keep it under twenty lines. No brief here; the Deliver step writes the brief.
 - **Name the unit of change.** Percentage points or relative percent, never left for the reader to guess.
 - **Rerunnable or it did not happen.** Anyone can run the script again and get the same tables, charts and numbers.
 - **Say what you did not check.** A gap you name is safer than one a reader finds later.
-- **Size it.** A rate or an index tells the decider which way; money for the whole group tells them whether it is worth doing.
