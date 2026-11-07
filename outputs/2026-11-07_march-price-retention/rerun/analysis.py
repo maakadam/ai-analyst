@@ -412,6 +412,25 @@ money_df["rollback_gain_calibrated"] = money_df.revenue_rollback_10 - money_df.r
 money_df["rollback_gain_calibrated_lo"] = money_df.rollback_gain_lo + money_df.rollback_gain_calibrated - money_df.rollback_gain
 money_df.to_csv(OUT / "money_rollback_by_tenure.csv", index=False)
 
+# Intro price over a range of new-starter volumes. The intro rows are linear in the number of
+# starters a month, so the August-based gain (and its interval) scales to each complete month's
+# non-trial volume from March to August 2026. September 2026 is open and left out.
+vol = (mstart[(mstart.start >= PRICE_DAY) & (mstart.start < pd.Timestamp("2026-09-01"))
+              & ~mstart.user_id.isin(trial_users)]
+       .start.dt.to_period("M").value_counts().sort_index())
+intro_rows = money_df[money_df.form.str.startswith("introductory price")
+                      & (money_df.band == "Intro price, non-trial starters")]
+vr = []
+for r in intro_rows.itertuples():
+    per = 1 / NEW_NONTRIAL
+    for m, n in list(vol.items()) + [("median Mar-Aug", vol.median()), ("lowest", vol.min()), ("highest", vol.max())]:
+        vr.append({"form": r.form, "horizon_months": r.horizon_months, "volume_month": str(m),
+                   "starters_per_month": n, "rollback_gain": r.rollback_gain * per * n,
+                   "rollback_gain_lo": r.rollback_gain_lo * per * n, "rollback_gain_hi": r.rollback_gain_hi * per * n,
+                   "rollback_gain_calibrated": r.rollback_gain_calibrated * per * n})
+intro_range = pd.DataFrame(vr)
+intro_range.to_csv(OUT / "intro_price_by_starter_volume.csv", index=False)
+
 for label in money_df.form.unique():
     for hz in money_df[money_df.form == label].horizon_months.unique():
         x = money_df[(money_df.form == label) & (money_df.horizon_months == hz) & money_df.band.isin(BAND_ORDER)]
@@ -530,5 +549,7 @@ print(f"\nNew monthly starters a month: {NEW_NONTRIAL:.0f} non-trial and {NEW_TR
       f"non-trial average Mar-Jul {NEW_NONTRIAL_MARJUL:.0f}.")
 print("\nModel vs paid months (1 March base):")
 print(model_ok.round(3).to_string(index=False))
+print("\nIntro price, non-trial starters, by monthly volume (main scenario):")
+print(intro_range[intro_range.form == "introductory price, new starters"].round(0).to_string(index=False))
 print("\nMoney and decision rule (rollback gain = rollback revenue minus keep revenue, $):")
 print(rule.drop(columns=["did_lo_pp", "did_hi_pp", "did_pp", "rollback_gain_hi"]).round(0).to_string(index=False))

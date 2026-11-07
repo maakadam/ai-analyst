@@ -118,6 +118,27 @@ Model vs paid months (1 March base):
  6-11 months         4850.055         4597               0.948        False
  All tenures        28664.515        28075               0.979         True
 
+Intro price, non-trial starters, by monthly volume (main scenario):
+                            form  horizon_months   volume_month  starters_per_month  rollback_gain  rollback_gain_lo  rollback_gain_hi  rollback_gain_calibrated
+introductory price, new starters               6        2026-03               197.0        -1045.0           -1966.0             -66.0                     248.0
+introductory price, new starters               6        2026-04               213.0        -1130.0           -2126.0             -72.0                     269.0
+introductory price, new starters               6        2026-05               180.0         -955.0           -1796.0             -61.0                     227.0
+introductory price, new starters               6        2026-06               197.0        -1045.0           -1966.0             -66.0                     248.0
+introductory price, new starters               6        2026-07               491.0        -2604.0           -4900.0            -165.0                     619.0
+introductory price, new starters               6        2026-08                68.0         -361.0            -679.0             -23.0                      86.0
+introductory price, new starters               6 median Mar-Aug               197.0        -1045.0           -1966.0             -66.0                     248.0
+introductory price, new starters               6         lowest                68.0         -361.0            -679.0             -23.0                      86.0
+introductory price, new starters               6        highest               491.0        -2604.0           -4900.0            -165.0                     619.0
+introductory price, new starters              12        2026-03               197.0         9596.0            4897.0           13921.0                   13768.0
+introductory price, new starters              12        2026-04               213.0        10376.0            5295.0           15052.0                   14887.0
+introductory price, new starters              12        2026-05               180.0         8768.0            4475.0           12720.0                   12580.0
+introductory price, new starters              12        2026-06               197.0         9596.0            4897.0           13921.0                   13768.0
+introductory price, new starters              12        2026-07               491.0        23918.0           12205.0           34697.0                   34316.0
+introductory price, new starters              12        2026-08                68.0         3312.0            1690.0            4805.0                    4753.0
+introductory price, new starters              12 median Mar-Aug               197.0         9596.0            4897.0           13921.0                   13768.0
+introductory price, new starters              12         lowest                68.0         3312.0            1690.0            4805.0                    4753.0
+introductory price, new starters              12        highest               491.0        23918.0           12205.0           34697.0                   34316.0
+
 Money and decision rule (rollback gain = rollback revenue minus keep revenue, $):
                                                               form  horizon_months                                          band  subscribers  rollback_gain  rollback_gain_lo  rollback_gain_calibrated  rollback_gain_calibrated_lo  churn_clearly_up  rollback_pays  rollback_recommended  rollback_pays_if_keep_calibrated  tentative_projection_only
                                base on 2026-03-01, observed months               6                                    0-2 months          637        -2378.0           -3028.0                   -1218.0                      -1868.0              True          False                 False                             False                      False
