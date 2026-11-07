@@ -28,7 +28,7 @@ Grain (a guess from the data, confirm it): one row per subscription_id. 30,747 r
 - `subscription_id`: the subscription's key; joins to `payments.subscription_id` (inferred).
 - `user_id`: the subscriber; joins to `users.user_id`. Exactly one subscription per user, so a plan switch (monthly to annual, paid to free) is not visible as a second row (inferred).
 - `plan`: free, monthly or annual (inferred). Free rows never end (quirk "Free plans never end").
-- `start_date`: when the subscription began; first payment falls on this day for paid plans started since Feb 2025 (inferred). 102 free rows start after 2026-09-24, all trial users (quirk "Future start dates").
+- `start_date`: when the subscription began; first payment falls on this day for paid plans started since Feb 2025 (inferred). 102 free rows and 582 paid rows start after 2026-09-24 (the free ones all trial users) (quirk "Future start dates").
 - `end_date`: when the subscription ended or will end; null means still running (inferred). 150 rows end after 2026-09-24, all status `canceled` (quirk "Future end dates"). Midnight-only times until Sep 2025, then a mix of real times (quirk on the October 2025 recording change in corrections.md).
 - `status`: active (no end date), canceled (end date set, 150 of 790 still in the future), expired (ended) (inferred).
 
@@ -36,5 +36,5 @@ Grain in plain words: one row per user's subscription; a user has exactly one (i
 
 Facts from profiling on 2026-11-07:
 - Monthly end dates per month jump from about 20-35 (2025-01 to 2025-09) to about 115-145 (2025-10 to 2026-03), the same month end-date times start changing; then to about 250-355 (2026-04 to 2026-09). Read the October 2025 jump with the recording change in mind.
-- 1,391 paid subscriptions have no payment row: 533 ended before payments start (2025-01-01); 582 non-trial paid subscriptions started in 2026-09 with no payment yet (unexplained); 235 started in the 2025-09 spike, all ended after 30-360 days with no payment (unexplained); the rest are small.
+- 1,391 paid subscriptions have no payment row: 533 ended before payments start (2025-01-01); 582 paid subscriptions (425 monthly, 157 annual) start after 2026-09-24, so have no payment yet (scheduled starts, expected; corrected 2026-11-07); 235 started in the 2025-09 spike, all ended after 30-360 days with no payment (unexplained); the rest are small.
 
