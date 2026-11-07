@@ -93,9 +93,10 @@ You write `outputs/<run>/brief.md` with exactly these headings. Other skills rea
 5. Write the answer to the Question in one sentence, then the action it implies. This is the recommendation.
 6. Only now read the findings in `review.md`, for two things: limits that change how far a claim goes (they go next to that claim, in plain words) and gaps that lower how sure you are. A finding that changes neither goes to the Appendix only.
 7. **Pick a course.** Open questions do not make a recommendation conditional by default. Recommend what the evidence best supports today, say how sure you are, and put what would change it in one line. Only when the evidence points both ways with nothing to break the tie, say so and recommend the cheapest next step that would break it.
-8. Size it. When the decision has a money side, take the money at stake for the whole affected group from the CSVs and put it in the Recommendation. If no CSV holds it, say so under Not checked and lower how sure you are; never work it out.
-9. Weigh what is not verified. If the number the recommendation rests on was added or changed after the last review, or the review marks it not verified, you can be no more than tentative, and the Recommendation says which number is unchecked in plain words.
-10. Sort the open questions. One that the data could answer (a horizon, a cut, a baseline) is a gap in the analysis: it goes in the Appendix as not verified and lowers how sure you are; it is never handed to the decider. Only a question that needs the decider's judgement or knowledge (a target, a risk appetite, another change they know of) goes under Open for you.
+8. Name how to find out. When the evidence cannot separate cause from coincidence (before-and-after data, or a weak comparison group), the recommendation names the cheapest way to find out, such as a holdout, a staged rollout or a small experiment, instead of only waiting for more data.
+9. Size it. When the decision has a money side, take the money at stake for the whole affected group from the CSVs and put it in the Recommendation. If no CSV holds it, say so under Not checked and lower how sure you are; never work it out.
+10. Weigh what is not verified. If the number the recommendation rests on was added or changed after the last review, or the review marks it not verified, you can be no more than tentative, and the Recommendation says which number is unchecked in plain words.
+11. Sort the open questions. One that the data could answer (a horizon, a cut, a baseline) is a gap in the analysis: it goes in the Appendix as not verified and lowers how sure you are; it is never handed to the decider. Only a question that needs the decider's judgement or knowledge (a target, a risk appetite, another change they know of) goes under Open for you.
 
 ## Act 3: Write the brief
 
@@ -105,11 +106,11 @@ You write `outputs/<run>/brief.md` with exactly these headings. Other skills rea
 
 ## Act 4: Read it before saving
 
-1. Find each number in the brief in a CSV in `data/`, and each claim that something "holds without" or "is not explained by" something in a result table too. Fix or remove any you cannot find.
+1. Find each number in the brief in a CSV in `data/`, and each claim it makes in a result table too. Fix or remove any you cannot find.
 2. Read only the Recommendation and Key Takeaways, as the decider would. They say what to do, how sure, and the limit that matters, with nothing to look up.
 3. Count: the body has no finding codes, file names or column names, at most two numbers in the Recommendation, at most two per takeaway.
 4. If the decision has a money side, the Recommendation says how much is at stake in money, or says it is not known.
-5. The recommendation follows from the findings, and no finding argues against it. A larger risk elsewhere in the results (for example the whole base turning negative later) is named in the Recommendation or its "what would change this" line, not only as a limit further down.
+5. The recommendation follows from the findings, and no finding argues against it. A larger risk elsewhere in the results is named in the Recommendation or its "what would change this" line, not only as a limit further down.
 6. Every Needs the user and Small fix finding in `review.md` appears once in the Appendix.
 
 ## Deliver

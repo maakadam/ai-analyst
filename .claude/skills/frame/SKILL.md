@@ -64,7 +64,7 @@ Framed: <the question after framing, in clean wording>
 1. The question is `$ARGUMENTS`. If it is empty, ask for it and wait.
 2. Check the question for the Decision, the Audience, the Population, What would change the decision and the Analysis window.
 3. Ask for whatever is missing in one short plain-text message. Also ask what else the analysis needs from them, such as other changes in the period or the result they expect.
-   - When the decision could treat some customers differently (a price, an offer, a rollback for some groups), ask which groups the business can actually treat separately, for example new against existing customers, a country, a platform or a channel, and any it would not, such as charging loyal customers more than new ones. Record the answer under Population. The analysis looks for differences only where a lever exists.
+   - When the decision could treat some customers differently, ask which groups the business can actually treat separately, and any it would not. Record the answer under Population. The analysis looks for differences only where a lever exists.
 4. If the Decision or the Audience is still missing, ask once more, then stop and say why.
 ## Act 2: Gather knowledge
 

@@ -29,7 +29,7 @@ These hold in every act.
 - **Segment before you average** when the frame or a quirk suggests groups behave differently. An average over groups that move in opposite directions hides both.
 - **Percentage points and relative percent are different numbers.** A rate going from 40% to 44% is up 4 percentage points and up 10% relative. Name which one you mean, every time.
 - **Never trust a period that has not closed.** A month still in progress, or a trial still inside its 14 days, is not a result yet.
-- **Every claim has a table.** A number or a sensitivity the brief may use ("the rise holds without July") is saved to `data/`. A check that lives only in the conversation or a scratch script cannot reach the brief.
+- **Every claim has a table.** A number or a sensitivity the brief may use is saved to `data/`. A check that lives only in the conversation or a scratch script cannot reach the brief.
 
 ## Act 1: Find the question (the gate)
 
@@ -52,9 +52,9 @@ Write three to six bullets describing the computation. The plan must say:
 - How each applicable quirk is handled. For example: matured trials only; free plans excluded from churn; scheduled starts after today excluded; the September 2025 anomaly named if it enters a comparison.
 - Which segments you will split by and why.
 - Which checks the script will run.
-- When the decision has a money side: the money at stake for the whole affected population over a stated period (for example revenue per year for all new subscribers), next to any per-customer or per-100 figure. The decider weighs it against the cost of acting.
-- When a projection goes past the months observed: the observed-horizon answer next to it, and a test that the rate projected has held (for example churn by month since the change, among those present before it). Say whether it is steady, fading or still rising.
-- When the recommendation could act on a group going forward (new subscribers, a channel, a country): whether that group is still made of the same people, for example a new source feeding it (trials, a campaign), a jump in sign-ups or a shift in mix, saved as a result table.
+- When the decision has a money side: the money at stake for the whole affected population over a stated period, next to any per-customer or per-100 figure. The decider weighs it against the cost of acting.
+- When a projection goes past the months observed: the observed-horizon answer next to it, and a test that the rate projected has held. Say whether it is steady, fading or still rising.
+- When the recommendation could act on a group going forward: whether that group is still made of the same people (a new source feeding it, a jump in volume, a shift in mix), saved as a result table.
 
 Show the plan before writing the script.
 

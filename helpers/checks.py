@@ -121,7 +121,7 @@ def stable_over_time(
 
     Use it before comparing periods, so a change in how data is logged is not read as a real change.
     It tracks one level per period: the share of True for a yes/no field, the median for a
-    numeric field (such as days from the last payment to the end date), and otherwise the
+    numeric field (such as a gap between two dates), and otherwise the
     share holding the most common value. A break is a period whose level moves away from
     the median of the `window` periods before it by more than `tolerance` (a share for
     shares, relative for medians) and by more than three standard errors, and stays moved
