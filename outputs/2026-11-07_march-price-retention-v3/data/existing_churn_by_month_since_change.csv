@@ -1,0 +1,7 @@
+month,sub_months,churned,churn_rate,months_since_change,baseline_churn_all_tenures,expected_at_baseline_rates,ratio_to_baseline_same_tenure,trend_label,trend_rule
+2026-03,5358,129,0.024076147816349383,0,0.02080797770012956,110.8832960997023,1.163385329779589,steady,Apr-May vs Jul-Aug 2026 ratio to baseline at same tenure; within 15% = steady
+2026-04,5229,266,0.050870147255689425,1,0.02080797770012956,109.87172674198443,2.421005001811403,steady,Apr-May vs Jul-Aug 2026 ratio to baseline at same tenure; within 15% = steady
+2026-05,4963,281,0.056618980455369734,2,0.02080797770012956,101.31659339403777,2.7734844864665193,steady,Apr-May vs Jul-Aug 2026 ratio to baseline at same tenure; within 15% = steady
+2026-06,4682,231,0.04933788979068774,3,0.02080797770012956,92.86542097794535,2.4874705521968212,steady,Apr-May vs Jul-Aug 2026 ratio to baseline at same tenure; within 15% = steady
+2026-07,4451,179,0.04021568186924287,4,0.02080797770012956,85.21105230238614,2.1006664647772166,steady,Apr-May vs Jul-Aug 2026 ratio to baseline at same tenure; within 15% = steady
+2026-08,4272,212,0.04962546816479401,5,0.02080797770012956,79.25551811613059,2.674892613652,steady,Apr-May vs Jul-Aug 2026 ratio to baseline at same tenure; within 15% = steady
