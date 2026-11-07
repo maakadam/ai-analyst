@@ -91,7 +91,7 @@ Judge whether the code is sound overall. Skip style and small details.
    - Every period is complete: no partial months, and no one counted before they had the full time to reach the outcome.
    - Compared periods are alike in length and season.
 5. Known data issues (quirks, corrections) are handled.
-6. Map the data from each source table, through filters, joins and new columns, to each result CSV and chart, with row counts where the script prints them.
+6. Map the data from each source table, through filters, joins and new columns, to each result CSV and chart, with row counts where the script prints them. This becomes the Data flow.
 
 ## Act 5: Rerun
 
@@ -101,7 +101,7 @@ Judge whether the code is sound overall. Skip style and small details.
 4. What the script, comments and charts claim follows from the results.
 5. Open each chart: it shows what its title says, and the axes do not mislead.
 6. Anything written to `knowledge/beam/` matches the results and does not contradict an older line.
-7. Every claim the analysis makes, including a sensitivity, is backed by a result table in `data/`. A check you ran in `rerun/` is evidence for the review only; if the brief will need it, that is a Small fix for /analyse.
+7. Every claim the analysis makes, including a sensitivity, is backed by a result table in the run folder's `data/`. A check you ran in `rerun/` is evidence for the review only; if the brief will need it, that is a Small fix for /analyse.
 
 ## Act 6: Source data
 
@@ -131,7 +131,7 @@ Judge the method. Do not run checks yourself.
 ## Act 8: Write the review
 
 1. Write `outputs/<run>/review.md` from the template, each finding under Code review or Analysis review, most serious first.
-2. Tag each step in the map that has a finding with the finding's number, and mark it as an issue.
+2. Tag each step in Data flow that has a finding with the finding's number, and mark it as an issue.
 3. Give exactly one verdict.
 4. Fill Checked (at most five lines) and Not checked. One line always says how dates and windows were handled, and one says what the source-data checks in Act 6 found. On a recheck, one line says which earlier findings are fixed.
 

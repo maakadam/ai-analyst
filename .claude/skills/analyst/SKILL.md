@@ -28,7 +28,7 @@ Every step below follows these rules.
 3. Run the `analyse` skill on the run folder (`.claude/skills/analyse/SKILL.md`).
 4. Run the `validate` skill on the run folder (`.claude/skills/validate/SKILL.md`), then act on its verdict:
    - **Fix first:** fix `analysis.py` from the findings, rerun it, and validate again. If the second round is still Fix first, stop and report the findings; write no brief.
-   - **Think on it:** apply the Small fix findings (a filter, a baseline, a label), rerun the script once, and carry every other finding into the brief's Appendix as not verified. If a fix adds a result or changes a number the recommendation rests on, validate once more; if that gives Fix first, stop and write no brief.
+   - **Think on it:** apply the Small fix findings (a filter, a baseline, a label), rerun the script once, and carry the rest into the brief: Needs the user findings to Open for you or the Appendix (deliver sorts them), unapplied Small fix findings to the Appendix as not verified, and Notes to the Appendix as they are. If a fix adds a result or changes a number the recommendation rests on, validate once more; if that gives Fix first, stop and write no brief.
    - **Ship it:** go to deliver.
 5. Run the `deliver` skill on the run folder (`.claude/skills/deliver/SKILL.md`).
 6. Finish with the path of the run folder, the verdict from `review.md`, and the Key Takeaways from `brief.md` copied verbatim. If the brief marks a number the Recommendation rests on as not verified, add one line naming it; the run is not complete until it is verified. Nothing else on the CLI.
