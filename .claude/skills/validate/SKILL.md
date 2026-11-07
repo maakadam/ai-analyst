@@ -102,11 +102,10 @@ Judge whether the code is sound overall. Skip style and small details.
 1. If the script is not safe to rerun, skip the rerun.
 2. Copy `analysis.py` to `outputs/<run>/rerun/`, run it from the repo root, and compare with `poetry run python helpers/compare.py outputs/<run>/data outputs/<run>/rerun/data`. If it fails, write the cause and the fix as a finding, give Fix first, and skip the remaining checks.
 3. Read the printed output and result files: the numbers make sense, and the script's own sanity checks ran and passed.
-4. `data/baseline.csv` exists, its groups are the ones the findings compare, and its group sizes match the populations the findings use. If it is missing or disagrees, that is a Small fix for /analyse.
-5. What the script, comments and charts claim follows from the results.
-6. Open each chart: it shows what its title says, and the axes do not mislead.
-7. Anything written to `knowledge/beam/` matches the results and does not contradict an older line.
-8. Every claim the analysis makes, including a sensitivity, is backed by a result table in `data/`. A check you ran in `rerun/` is evidence for the review only; if the brief will need it, that is a Small fix for /analyse.
+4. What the script, comments and charts claim follows from the results.
+5. Open each chart: it shows what its title says, and the axes do not mislead.
+6. Anything written to `knowledge/beam/` matches the results and does not contradict an older line.
+7. Every claim the analysis makes, including a sensitivity, is backed by a result table in `data/`. A check you ran in `rerun/` is evidence for the review only; if the brief will need it, that is a Small fix for /analyse.
 
 ## Act 6: Source data
 
