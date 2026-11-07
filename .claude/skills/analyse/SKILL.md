@@ -52,8 +52,8 @@ Write three to six bullets describing the computation. The plan must say:
 - How each applicable quirk is handled. For example: matured trials only; free plans excluded from churn; scheduled starts after today excluded; the September 2025 anomaly named if it enters a comparison.
 - Which segments you will split by and why.
 - Which checks the script will run.
-- When the decision has a money side: the money at stake for the whole affected population over a stated period, next to any per-customer or per-100 figure. The decider weighs it against the cost of acting.
-- When a projection goes past the months observed: the observed-horizon answer next to it, and a test that the rate projected has held. Say whether it is steady, fading or still rising.
+- When the decision has a money side: the money at stake for the whole affected group over a stated period, next to any per-customer figure or index. The decider weighs it against the cost of acting.
+- When a projection goes past the months observed: the answer over the months observed next to it, and a test that the projected rate has held. Say whether it is steady, fading or still rising.
 - When the recommendation could act on a group going forward: whether that group is still made of the same people (a new source feeding it, a jump in volume, a shift in mix), saved as a result table.
 
 Show the plan before writing the script.

@@ -47,7 +47,7 @@ You write `outputs/<run>/brief.md` with exactly these headings. Other skills rea
 **<one sentence: what to do>**
 <one or two sentences: why, with at most two numbers; when the decision has a money side, one of them is the money at stake for the whole group over a stated period>
 <how sure, in plain words: confident / fairly confident / tentative, and the main reason>
-<one line: what would change this recommendation>
+<one line: what would change this recommendation, and how to find out if cause is unclear>
 
 **Open for you**
 - <at most two questions, only ones that need the decider's judgement>
@@ -93,10 +93,10 @@ You write `outputs/<run>/brief.md` with exactly these headings. Other skills rea
 5. Write the answer to the Question in one sentence, then the action it implies. This is the recommendation.
 6. Only now read the findings in `review.md`, for two things: limits that change how far a claim goes (they go next to that claim, in plain words) and gaps that lower how sure you are. A finding that changes neither goes to the Appendix only.
 7. **Pick a course.** Open questions do not make a recommendation conditional by default. Recommend what the evidence best supports today, say how sure you are, and put what would change it in one line. Only when the evidence points both ways with nothing to break the tie, say so and recommend the cheapest next step that would break it.
-8. Name how to find out. When the evidence cannot separate cause from coincidence (before-and-after data, or a weak comparison group), the recommendation names the cheapest way to find out, such as a holdout, a staged rollout or a small experiment, instead of only waiting for more data.
-9. Size it. When the decision has a money side, take the money at stake for the whole affected group from the CSVs and put it in the Recommendation. If no CSV holds it, say so under Not checked and lower how sure you are; never work it out.
-10. Weigh what is not verified. If the number the recommendation rests on was added or changed after the last review, or the review marks it not verified, you can be no more than tentative, and the Recommendation says which number is unchecked in plain words.
-11. Sort the open questions. One that the data could answer (a horizon, a cut, a baseline) is a gap in the analysis: it goes in the Appendix as not verified and lowers how sure you are; it is never handed to the decider. Only a question that needs the decider's judgement or knowledge (a target, a risk appetite, another change they know of) goes under Open for you.
+8. **Name how to find out.** When the evidence cannot separate cause from coincidence (before-and-after data, or a weak comparison group), the recommendation names the cheapest way to find out, such as a holdout, a staged rollout or a small experiment, instead of only waiting for more data.
+9. **Size it.** When the decision has a money side, take the money at stake for the whole affected group from the CSVs and put it in the Recommendation. If no CSV holds it, say so under Not checked and lower how sure you are; never work it out.
+10. **Weigh what is not verified.** If the number the recommendation rests on was added or changed after the last review, or the review marks it not verified, the recommendation is at most tentative and says in plain words which number is unchecked.
+11. **Sort the open questions.** One that the data could answer (a horizon, a cut, a baseline) is a gap in the analysis: it goes in the Appendix as not verified and lowers how sure you are; it is never handed to the decider. Only a question that needs the decider's judgement or knowledge (a target, a risk appetite, another change they know of) goes under Open for you.
 
 ## Act 3: Write the brief
 
@@ -128,7 +128,7 @@ Keep it under five lines. Do not paste the brief into the CLI.
 - **Frame asks, analysis answers, review limits.** The brief is built from the frame and the analysis outputs. The review decides whether it ships and how far each claim goes, not what it says.
 - **Answer first, and commit.** The decider asked what to do. Say it, say how sure, say what would change it. "It depends" is not a recommendation.
 - **Business words in the body, references in the Appendix.** The decider never needs a file name or a finding code to follow the argument.
-- **Size the stake.** A per-customer index says which way; money for the whole group says whether it is worth doing.
+- **Size it.** A per-customer figure or index says which way; money for the whole group says whether it is worth doing.
 - **Few numbers, each with its comparison.** A number that does not move the decision stays in the Appendix or out.
 - **Limits travel with the claim.** A limit that changes how far a claim goes sits next to it, once, in plain words.
 - **The analyst's gaps are not the decider's homework.** A question the data could answer is a gap to close, not a question to ask.

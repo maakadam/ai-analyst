@@ -80,7 +80,7 @@ flowchart LR
 5. Additional context and Open questions are handled or named.
 6. The frame itself fits the decision. If the decision depends on something the frame never asks about, such as another outcome, another group or a cost, that is a Needs the user finding with Where: frame.md and Fix: return to /frame.
 7. The groups the analysis can single out are groups the business can treat differently (the frame's Population says which). A result that targets a group nobody can treat separately does not inform the decision.
-8. When the decision has a money side, a result table sizes it in money for the whole affected population over a stated period, not only per 100 customers or as an index. If not, that is a Small fix for /analyse.
+8. When the decision has a money side, a result table sizes it in money for the whole affected group over a stated period, not only per customer or as an index. If not, that is a Small fix for /analyse.
 
 ## Act 4: Code review
 
@@ -112,9 +112,9 @@ Judge whether the code is sound overall. Skip style and small details.
 The code can be right and the data underneath it can still change meaning halfway through the window. Test the inputs, not just the script.
 
 1. List the fields the headline metric depends on: the outcome date (for example `end_date`), status values, amounts, and any gap the metric relies on (for example days from the last payment to the end).
-2. For each, run `helpers.checks.stable_over_time` over the whole analysis window, from the repo root with a scratch script under `outputs/<run>/rerun/`. It takes a yes/no field (share True), a numeric field (median) or a category (share of its most common value), so pass a derived column when the meaning sits in a gap between two dates or in the timestamp itself. It flags a step against the recent level that lasts, beyond noise. Print only its `summary`.
+2. For each, run `helpers.checks.stable_over_time` over the whole analysis window, from the repo root with a scratch script under `outputs/<run>/rerun/`. Pass a yes/no, numeric or category column; derive one when the meaning sits in a gap between two dates or in the timestamp itself. It flags a lasting step beyond noise. Print only its `summary`.
 3. A break says the field changed, not why. Before you call it a recording break, run the check again on a subset where the mix is steady. A step that shows in every subset at once, or a format that appears or vanishes, is a recording break. A step that follows a real event, or vanishes in the steady subset, is behaviour or mix.
-4. A recording break inside any compared window means the baseline is not like for like. Name the period and the metric, and say which baselines stay clean. An unexplained change just before the baseline (a measure that moved for no known reason) is a Needs the user finding: ask what changed.
+4. A recording break inside any compared window means the baseline is not like for like. Name the period and the metric, and say which baselines stay clean. A change just before the baseline that nothing in the data explains is a Needs the user finding: ask what changed.
 5. Check that each compared period has enough people behind it and that the mix of groups did not shift between periods (a signup spike, a new channel).
 6. Check that any group the recommendation would act on going forward is still made of the same people: a new source feeding it, a jump in volume, a shift in mix. If the future group differs from the one measured, that is a finding.
 
@@ -128,7 +128,7 @@ Judge the method. Do not run checks yourself.
 4. Can the decision rule pick out groups? A rule every group passes, or none does, cannot inform a targeted decision; that is a finding.
 5. Are other explanations and confounders named? Is cause claimed from a correlation?
 6. Would the conclusion hold under reasonable other choices of baseline, definition or window?
-7. If a projection decides the call, does the analysis show that the rate it projects has held, rather than a one-off reaction? Is the answer over the observed months shown next to the projected one? If the two point different ways, the recommendation can be no stronger than tentative.
+7. If a projection decides the call, does the analysis show that the rate it projects has held, rather than a one-off reaction? Is the answer over the observed months shown next to the projected one? If the two point different ways, the recommendation is at most tentative.
 8. Is the result big enough to matter for the decision, in money, against the cost and risk of acting on it?
 9. Anything else that could make the answer wrong.
 

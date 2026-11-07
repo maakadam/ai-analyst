@@ -66,6 +66,7 @@ Framed: <the question after framing, in clean wording>
 3. Ask for whatever is missing in one short plain-text message. Also ask what else the analysis needs from them, such as other changes in the period or the result they expect.
    - When the decision could treat some customers differently, ask which groups the business can actually treat separately, and any it would not. Record the answer under Population. The analysis looks for differences only where a lever exists.
 4. If the Decision or the Audience is still missing, ask once more, then stop and say why.
+
 ## Act 2: Gather knowledge
 
 1. Read the analysis date from AGENTS.md. Never use the real date as the analysis date.
