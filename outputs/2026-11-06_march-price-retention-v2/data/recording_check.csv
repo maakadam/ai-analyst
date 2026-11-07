@@ -1,0 +1,4 @@
+field,subset,tolerance,break_from_mar_2025,stable_from_nov_2025
+fixed_30_day_end,all monthly enders,0.1,2025-09,True
+has_time_of_day,all monthly enders,0.25,2025-10,True
+has_time_of_day,mid-cycle cancellations,0.25,,True
