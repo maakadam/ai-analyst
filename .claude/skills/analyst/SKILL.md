@@ -26,6 +26,9 @@ Every step below follows these rules.
 1. Run the `frame` skill with the question above: read `.claude/skills/frame/SKILL.md` and follow it. Note the run folder it created.
 2. For each table named under "Tables likely involved" in the frame note that has no `knowledge/beam/<table>.md`, run the `profile` skill on it (`.claude/skills/profile/SKILL.md`).
 3. Run the `analyse` skill on the run folder (`.claude/skills/analyse/SKILL.md`).
-4. Run the `validate` skill on the run folder (`.claude/skills/validate/SKILL.md`). If its verdict is **Fix first**, fix `analysis.py` according to the findings, rerun it, and run `validate` again. At most two rounds. If it is still **Fix first**, stop and report the findings; do not write a brief. If its verdict is **Think on it**, apply any finding that is a small change to `analysis.py` (a filter, a baseline, a label) and rerun the script once, and carry every remaining finding into the brief's Checks section as not verified; do not run `validate` again.
+4. Run the `validate` skill on the run folder (`.claude/skills/validate/SKILL.md`), then act on its verdict:
+   - **Fix first:** fix `analysis.py` from the findings, rerun it, and validate again. If the second round is still Fix first, stop and report the findings; write no brief.
+   - **Think on it:** apply the Small fix findings (a filter, a baseline, a label), rerun the script once, and carry the rest into the brief: Needs the user findings to Open for you or the Appendix (deliver sorts them), unapplied Small fix findings to the Appendix as not verified, and Notes to the Appendix as they are. If a fix adds a result or changes a number the recommendation rests on, validate once more; if that gives Fix first, stop and write no brief.
+   - **Ship it:** go to deliver.
 5. Run the `deliver` skill on the run folder (`.claude/skills/deliver/SKILL.md`).
-6. Finish with the path of the run folder, the verdict from `review.md`, and the Key Takeaways from `brief.md` copied verbatim. Nothing else on the CLI.
+6. Finish with the path of the run folder, the verdict from `review.md`, and the Key Takeaways from `brief.md` copied verbatim. If the brief marks a number the Recommendation rests on as not verified, add one line naming it; the run is not complete until it is verified. Nothing else on the CLI.

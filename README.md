@@ -4,11 +4,11 @@ An AI data analyst that runs inside Claude Code and answers business questions a
 
 ## How It Works
 
-1. **Frame** - Pins the question, the decision it informs and the audience
-2. **Profile** - Describes each table from the data and writes it down
-3. **Analyse** - Writes pandas code that can be rerun, where every number carries a comparison
-4. **Validate** - Peer reviews its own work: mechanics first, then reasoning
-5. **Deliver** - Writes a brief with the recommendation first and a Checks section
+1. **Frame:** pins the question, the decision it informs, the audience and what would change the decision, then gets your approval before any data is touched
+2. **Profile:** describes each table from the data and writes it down
+3. **Analyse:** writes pandas code that can be rerun, where every number carries a comparison
+4. **Validate:** reviews the work as a fresh reader (fit to the frame, code, rerun, source data, reasoning) and gives one verdict: Fix first, Think on it or Ship it
+5. **Deliver:** writes a brief for the decider, with the recommendation first and the sources and checks in an appendix
 
 ## Setup
 
@@ -58,11 +58,15 @@ There is no framework and no Python program controlling the model. The agent is 
 - **Helpers:** small Python modules in `helpers/`. Claude writes the analysis script, and the arithmetic runs in code, never in the model's head.
 - **One output folder per question:** the brief, the charts and the script that produced the numbers, so anyone can rerun it.
 
-## What you will build
+## Status
 
-This repo ships the analyst's middle: the Profile and Analyse skills and the helpers behind them. Three skills are still to be written before `/analyst` can run end to end: Frame, Validate and Deliver, each in its own folder under `.claude/skills/`. Until Profile has been run on each table, `knowledge/beam/` holds only the known quirks and the corrections file. A finished version of everything lives in [the reference repo](https://github.com/Future-Proof-DS/ai-analyst), for comparison once the three skills are written.
+All six skills are in place, so `/analyst` runs end to end. The course repo shipped Profile, Analyse and the helpers; Frame, Validate and Deliver were written here. Until Profile has been run on each table, `knowledge/beam/` holds only the known quirks and the corrections file; the analyst reads it before touching any data. `TODO.md` lists ideas for later.
 
-Before touching any data, the analyst reads `knowledge/beam/`, which holds the known quirks of Beam's tables and any corrections it has been given.
+Try it with the course question:
+
+```
+/analyst Did the March 2026 price increase hurt retention, and for whom? The head of growth is deciding whether to roll back part of the increase for some customers.
+```
 
 ## Project Structure
 
