@@ -64,6 +64,7 @@ Framed: <the question after framing, in clean wording>
 1. The question is `$ARGUMENTS`. If it is empty, ask for it and wait.
 2. Check the question for the Decision, the Audience, the Population, What would change the decision and the Analysis window.
 3. Ask for whatever is missing in one short plain-text message. Also ask what else the analysis needs from them, such as other changes in the period or the result they expect.
+   - When the decision could treat some customers differently (a price, an offer, a rollback for some groups), ask which groups the business can actually treat separately, for example new against existing customers, a country, a platform or a channel, and any it would not, such as charging loyal customers more than new ones. Record the answer under Population. The analysis looks for differences only where a lever exists.
 4. If the Decision or the Audience is still missing, ask once more, then stop and say why.
 ## Act 2: Gather knowledge
 
@@ -98,5 +99,6 @@ Keep it under ten lines. Do not paste the note into the CLI.
 - **The decision comes before the data.** No decision, no frame.
 - **The user decides; the analyst advises.** Ask for what only the user knows, and label what you add.
 - **Like with like.** Suggest the splits that make a fair comparison (tenure, cohort) before the user has to ask for them.
+- **Levers before splits.** A group the business cannot treat differently cannot be the answer to a targeting decision; find out which groups it can before the data is touched.
 - **Names, not data.** Frame reads the knowledge folder, never the CSVs.
 - **The headings are a contract.** Spell them exactly.
