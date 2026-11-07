@@ -1,0 +1,2 @@
+baseline_week_min,baseline_week_max,baseline_weeks,trial_weeks,trial_weeks_above_baseline_max,trial_weeks_above_same_week_non_trial,trial_week_min,trial_week_max,non_trial_week_min,non_trial_week_max
+0.3355263157894737,0.47435897435897434,21,5,5,5,0.5179856115107914,0.5454545454545454,0.3516949152542373,0.45075757575757575

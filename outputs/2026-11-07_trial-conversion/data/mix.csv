@@ -1,0 +1,28 @@
+group,attribute,value,share_of_signups
+Trial users,country,US,0.41081777205408887
+Trial users,country,Rest,0.20025756600128783
+Trial users,country,EU,0.19703799098518995
+Trial users,country,India,0.19188667095943335
+Trial users,device_type,Android,0.33869929169349644
+Trial users,device_type,iOS,0.33354797166773986
+Trial users,device_type,Web,0.3277527366387637
+Trial users,plan_of_payers,monthly,0.7125603864734299
+Trial users,plan_of_payers,annual,0.28743961352657005
+"Non-trial signups, same days",country,US,0.39986693280106456
+"Non-trial signups, same days",country,India,0.2109115103127079
+"Non-trial signups, same days",country,Rest,0.20958083832335328
+"Non-trial signups, same days",country,EU,0.17964071856287425
+"Non-trial signups, same days",device_type,Android,0.3393213572854291
+"Non-trial signups, same days",device_type,Web,0.3373253493013972
+"Non-trial signups, same days",device_type,iOS,0.32335329341317365
+"Non-trial signups, same days",plan_of_payers,monthly,0.7555178268251274
+"Non-trial signups, same days",plan_of_payers,annual,0.24448217317487267
+Signups Mar-Jul 2026,country,US,0.3927501497902936
+Signups Mar-Jul 2026,country,EU,0.2061114439784302
+Signups Mar-Jul 2026,country,India,0.20371479928100658
+Signups Mar-Jul 2026,country,Rest,0.19742360695026961
+Signups Mar-Jul 2026,device_type,Web,0.3433193529059317
+Signups Mar-Jul 2026,device_type,Android,0.3298382264829239
+Signups Mar-Jul 2026,device_type,iOS,0.3268424206111444
+Signups Mar-Jul 2026,plan_of_payers,monthly,0.7492401215805471
+Signups Mar-Jul 2026,plan_of_payers,annual,0.2507598784194529

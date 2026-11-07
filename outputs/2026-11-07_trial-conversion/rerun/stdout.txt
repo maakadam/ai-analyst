@@ -1,0 +1,59 @@
+The currently activated Python version 3.13.18 is not supported by the project (>=3.10,<3.12).
+Trying to find and use a compatible version. 
+Using python3.11 (3.11.18)
+== Checks ==
+The join kept 30,747 of 31,165 rows without fanning out.
+The join kept 2,073 of 31,165 rows without fanning out.
+Trial start minus signup date: min 0 days, max 0 days.
+Partial edges in signup_date: the first period (2026-07-27/2026-08-02) starts on 2026-08-01 and the last period (2026-09-21/2026-09-27) ends on 2026-09-24.
+Excluded 520 of 2,073 rows because their window has not closed by 2026-09-24.
+Matured trials with no outcome: 0 (should be 0).
+Last signup day with a matured trial: 2026-09-10.
+paid (share True) shows no lasting step beyond 10% of its recent level across all 21 periods; largest step 37% to 44% in 2025-02, so the periods can be compared.
+
+== Main comparison: signups 2026-08-01 to 2026-09-10 ==
+Trial users: 53.3% end up paid (828 of 1,553; 95% CI 50.8% to 55.8%)
+Non-trial signups, same days: 39.2% end up paid (589 of 1,503; 95% CI 36.8% to 41.7%)
+Signups Mar-Jul 2026 (before trials): 39.4% end up paid (1,316 of 3,338; 95% CI 37.8% to 41.1%)
+Trial vs non-trial, same days: +14.1 percentage points, 95% CI +10.6 to +17.6 pp; +36.1% relative
+Trial vs Mar-Jul 2026 signups: +13.9 percentage points; +35.2% relative
+Non-trial (same days) vs Mar-Jul 2026 signups: -0.2 percentage points; -0.6% relative
+
+== Weekly ==
+Baseline weekly paid share (Mar-Jul 2026, 21 full weeks): 33.6% to 47.4%
+Trial-user weekly paid share (5 whole weeks): 51.8% to 54.5%
+Non-trial weekly paid share, same weeks: 35.2% to 45.1%
+Weeks where trial users beat the highest baseline week: 5 of 5; weeks where trial users beat same-week non-trial signups: 5 of 5
+
+== Seasonality (2025, before trials and before the Sep 2025 spike) ==
+Aug 2025 paid share 41.0% vs Mar-Jul 2025 39.5%: +1.5 pp (Mar-Jul monthly range 36.9% to 41.5%)
+
+== Volume and mix ==
+Paid per week, trial + non-trial vs all: The parts sum to 241.93 against a total of 241.93 (0.00% apart), so they match.
+Signups, trial + non-trial vs all: The parts sum to 3,056.00 against a total of 3,056.00 (0.00% apart), so they match.
+Mar-Jul 2026, All signups: 153 signups/week, 60 paid/week
+Aug 1-Sep 10 2026, Trial users: 265 signups/week, 141 paid/week
+Aug 1-Sep 10 2026, Non-trial signups: 257 signups/week, 101 paid/week
+Aug 1-Sep 10 2026, All signups: 522 signups/week, 242 paid/week
+Trial share of signups, Aug 1-Sep 10: 50.8%
+Largest country/device mix gap, trial vs non-trial: 1.9 pp
+Annual share of payers: trial 28.7%, non-trial 24.4%, Mar-Jul 2026 25.1%
+country segments vs window: The parts sum to 3,056.00 against a total of 3,056.00 (0.00% apart), so they match.
+device_type segments vs window: The parts sum to 3,056.00 against a total of 3,056.00 (0.00% apart), so they match.
+Lift by segment (pp): EU +5.9; India +15.7; Rest +13.7; US +17.1; Android +10.1; Web +11.1; iOS +21.3
+
+== Retention warning sign: charged again on day 30 ==
+Trial converts: 100.0% charged again around day 30 (143 of 143, starts 2026-08-15 to 2026-08-23; 95% CI 97.4% to 100.0%)
+Non-trial monthly starts, Aug 2026: 97.0% charged again around day 30 (32 of 33, starts 2026-08-03 to 2026-08-23; 95% CI 84.7% to 99.5%)
+Monthly starts Mar-Jul 2026: 92.8% charged again around day 30 (1186 of 1278, starts 2026-03-01 to 2026-07-30; 95% CI 91.3% to 94.1%)
+
+== Money: next quarter (13 weeks) ==
+90-day revenue per payer, Mar-Jun 2026 starts: monthly $33.40, annual $100.00
+Trials for about half of signups, as now, Low: 1,009 trial signups x +10.6 pp -> +107 payers; $+3,959 inside the quarter, $+5,634 over their first 90 days
+Trials for about half of signups, as now, Central: 3,447 trial signups x +14.1 pp -> +487 payers; $+18,033 inside the quarter, $+25,586 over their first 90 days
+Trials for about half of signups, as now, High: 3,447 trial signups x +17.6 pp -> +608 payers; $+22,500 inside the quarter, $+31,925 over their first 90 days
+Trials for all signups, Low: 1,985 trial signups x +10.6 pp -> +211 payers; $+7,790 inside the quarter, $+11,087 over their first 90 days
+Trials for all signups, Central: 6,783 trial signups x +14.1 pp -> +958 payers; $+35,486 inside the quarter, $+50,349 over their first 90 days
+Trials for all signups, High: 6,783 trial signups x +17.6 pp -> +1,196 payers; $+44,276 inside the quarter, $+62,822 over their first 90 days
+
+Charts saved.

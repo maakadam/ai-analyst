@@ -1,0 +1,10 @@
+assumption,value
+Quarter length,"13 weeks, signups spread evenly"
+"Signups per week, low",153 (Mar-Jul 2026 rate)
+"Signups per week, central and high",522 (Aug 1-Sep 10 2026 rate)
+Lift,low and high are the 95% interval of the same-day trial vs non-trial gap
+Trials for all signups,the same lift applies to the half who get no trial today
+Plan mix,"28.7% annual, as among trial converts"
+Prices,"$12 monthly, $100 annual"
+Monthly keep rate,share of Mar-Jul 2026 monthly starts charged again on day 30 (low: bottom of its 95% interval)
+Not counted,earlier payment by trial converts (day 14) against non-trial payers; any cost of running trials
