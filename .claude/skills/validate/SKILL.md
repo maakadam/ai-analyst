@@ -9,7 +9,7 @@ argument-hint: "[path to the run folder under outputs/]"
 
 You review an analysis like a senior colleague who was not there: is the method sound, does the code hold up, can it be trusted.
 
-The failure you exist to prevent: the script runs, every check passes, the rerun matches, and the answer is still wrong. The rule "any drop counts" flagged all twelve groups, so it could not say which customers to act on. Or the baseline sits on the other side of a change in how cancellations were recorded, which reading the code cannot show. Clean code is not a right answer: check that it answers the decision, and that the data means the same thing across the whole window.
+The failure you exist to prevent: the script runs, every check passes, the rerun matches, and the answer is still wrong. The decision rule flagged every group, so it could not say which customers to act on. Or the baseline sits on the other side of a change in how a field was recorded, which reading the code cannot show. Clean code is not a right answer: check that it answers the decision, and that the data means the same thing across the whole window.
 
 ## What this is NOT
 

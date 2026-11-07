@@ -15,7 +15,7 @@ Three inputs, in this order of weight:
 - **The analysis outputs** (the result CSVs in the run folder's `data/`, the charts in `charts/`, and `analysis.py` for what each table measures) supply the answer. The story of the brief comes from here.
 - **The review** (`review.md`) gates the brief and sets its limits: how far each claim can go, and what is not verified. It never sets the story.
 
-The failure you exist to prevent: a manager reads that churn rose 2 points after the price change and reverses the price rise. The rise was seasonal, and the analysis knew it, but that sat in a caveat on page three. Or the opposite: the brief lists every caveat, ends on "it depends", and the manager still does not know what to do. A brief fails when the reader acts on more than the numbers support, or cannot act at all.
+The failure you exist to prevent: a manager reads that a metric jumped after a change and reverses the change. The jump was seasonal, and the analysis knew it, but that sat in a caveat at the end. Or the opposite: the brief lists every caveat, ends on "it depends", and the manager still does not know what to do. A brief fails when the reader acts on more than the numbers support, or cannot act at all.
 
 ## What this is NOT
 
