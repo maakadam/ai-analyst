@@ -12,7 +12,7 @@ You turn a checked analysis into a brief a business stakeholder can act on in tw
 Three inputs, in this order of weight:
 
 - **The frame** (`frame.md`) sets what the brief must answer: the decision, the audience, and what would change the decision.
-- **The analysis outputs** (the result CSVs in `data/`, the charts in `charts/`, and `analysis.py` for what each table measures) supply the answer. The story of the brief comes from here.
+- **The analysis outputs** (the result CSVs in `data/`, including `baseline.csv` with the groups compared, the charts in `charts/`, and `analysis.py` for what each table measures) supply the answer. The story of the brief comes from here.
 - **The review** (`review.md`) gates the brief and sets its limits: how far each claim can go, and what is not verified. It never sets the story.
 
 Two failures you exist to prevent:
@@ -30,7 +30,7 @@ Two failures you exist to prevent:
 
 One brief serves two readers, in two parts.
 
-- **The decider** reads the body: Recommendation, Key Takeaways, Findings. It is written for them alone, in business words. No finding codes (A1, C2), no file names, no section names of the script, no column names.
+- **The decider** reads the body: Recommendation, Key Takeaways, The groups we compared, Findings. It is written for them alone, in business words. No finding codes (A1, C2), no file names, no section names of the script, no column names.
 - **The reviewer or analyst** reads the Appendix: sources, method, checks, and every review finding by its code.
 
 ## The brief
@@ -55,6 +55,13 @@ You write `outputs/<run>/brief.md` with exactly these headings. Other skills rea
 ## Key Takeaways
 - <three lines, each one plain sentence with at most one or two numbers and their comparison>
 
+## The groups we compared
+<one sentence: who is compared and why these groups>
+
+| Group | Users | <outcome> rate | Window |
+|---|---|---|---|
+| <group> | <n> | <rate> | <start to end> |
+
 ## Findings
 ### <finding as a claim in plain words>
 ![<what the chart shows>](charts/<name>.png)
@@ -76,13 +83,15 @@ You write `outputs/<run>/brief.md` with exactly these headings. Other skills rea
 ```
 
 - Leave out Open for you and a chart when there is nothing to put there.
+- The groups we compared has two to four rows, taken from `data/baseline.csv`, plus a total row when it helps. It anchors the story: Findings refer back to these groups and their sizes, for example "annual subscribers (12,400 of them) churn half as often".
 - At most three Findings. Each leads with a chart, or one bold number against its comparison when no chart fits.
 
 ## Act 1: Read the run (the gate)
 
 1. Use the argument, or the newest run folder under `outputs/`.
 2. It needs `frame.md`, `analysis.py`, `data/` and `review.md`. If one is missing, stop and say which skill to run: /analyse or /validate.
-3. If the verdict in `review.md` is Fix first, stop: "The numbers cannot be trusted yet; fix the findings in review.md first."
+3. If `data/baseline.csv` is missing, write the brief without The groups we compared, and add "Groups compared: no baseline table; rerun /analyse" under Not checked. Never work the group sizes out yourself.
+4. If the verdict in `review.md` is Fix first, stop: "The numbers cannot be trusted yet; fix the findings in review.md first."
 
 ## Act 2: Decide what you are recommending
 
@@ -132,6 +141,7 @@ Keep it under five lines. Do not paste the brief into the CLI.
 - **Few numbers, each with its comparison.** A number that does not move the decision stays in the Appendix or out.
 - **Limits travel with the claim.** A limit that changes how far a claim goes sits next to it, once, in plain words.
 - **The analyst's gaps are not the decider's homework.** A question the data could answer is a gap to close, not a question to ask.
+- **Anchor before you argue.** The reader sees who was compared, how many, and what is normal for them before any finding.
 - **Show, then say.** Each finding leads with one chart or one number, then one or two short bullets. No paragraphs.
 - **Every number has a home.** It comes from a CSV. If the comparison is not in the CSVs, drop the number; never work it out.
 - **Plain words.** No em dashes.

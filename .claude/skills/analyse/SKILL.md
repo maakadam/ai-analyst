@@ -44,7 +44,22 @@ These hold in every act.
 2. If a table involved has no note, run the profile skill on it first: read `.claude/skills/profile/SKILL.md` and follow it, then come back here.
 3. Say in one line which quirks apply to this question, and which corrections, if any.
 
-## Act 3: Plan
+## Act 3: Orient
+
+Know the people before you answer anything about them. A rate means little until you know how many people sit behind it and what is normal for them.
+
+1. Write a short orient section at the top of `analysis.py` that computes a fixed set of numbers for the population in the frame, and nothing more:
+   - the size of each comparison group (customers or subscribers),
+   - the base rate of the outcome for each group and overall (for example churn or trial conversion),
+   - the time window each group covers,
+   - the plan mix (free, monthly, annual, trial).
+2. Apply the same quirks and filters the answer will use, so these numbers are the denominators the findings rest on.
+3. Save them to `outputs/<run>/data/baseline.csv`, one row per group plus a total row, with columns `group`, `users`, `outcome`, `outcome_rate`, `window_start`, `window_end`. Add plan mix columns when it applies.
+4. Run it and read the numbers. Let them change the plan: a group too small to trust gets merged or named as thin, a surprising base rate gets a line in the plan on why.
+5. This is not profile. Profile describes the whole table; orient describes only the people this question is about.
+6. This is not a search for findings. Keep to the fixed set. Anything interesting it shows that the frame did not ask about goes in the CLI report as an open question, not into the answer.
+
+## Act 4: Plan
 
 Write three to six bullets describing the computation. The plan must say:
 
@@ -58,21 +73,24 @@ Write three to six bullets describing the computation. The plan must say:
 
 Show the plan before writing the script.
 
-## Act 4: Write and run the script
+## Act 5: Write and run the script
 
 Write one script at `outputs/<run>/analysis.py`:
 
 1. Read `data/*.csv` with pandas.
-2. Use `helpers.checks` for at least the checks the plan needs: `date_boundaries` for partial periods at the edges, `matured_only` for windows that have not closed, `join_fan_out` before trusting any join, `parts_sum_to_total` when segments should add back to a total. Print each check's `summary`.
-3. Save each result table to `outputs/<run>/data/<name>.csv`.
-4. Make charts only through `helpers.charts`: `bar` or `line`, then `save` into `outputs/<run>/charts/<name>.png`. Every title states the takeaway the chart proves, not a label.
-5. Print the headline numbers, each with its comparison, and the check summaries. Print aggregates only.
+2. Keep the orient section from Act 3 first, so `baseline.csv` is rebuilt on every run.
+3. Use `helpers.checks` for at least the checks the plan needs: `date_boundaries` for partial periods at the edges, `matured_only` for windows that have not closed, `join_fan_out` before trusting any join, `parts_sum_to_total` when segments should add back to a total. Print each check's `summary`.
+4. Save each result table to `outputs/<run>/data/<name>.csv`.
+5. Make charts only through `helpers.charts`: `bar` or `line`, then `save` into `outputs/<run>/charts/<name>.png`. Every title states the takeaway the chart proves, not a label.
+6. Print the headline numbers, each with its comparison, and the check summaries. Print aggregates only.
 
 Run it from the repo root with `poetry run python outputs/<run>/analysis.py`. If it fails, fix it and rerun until it runs clean. If a check fails, decide whether it changes the answer and fix the script or report it. If the data cannot answer the question, say so plainly and stop.
 
-## Act 5: Report
+## Act 6: Report
 
 On the CLI, report:
+
+- The groups compared: size and base rate of each, from `baseline.csv`.
 
 - Each headline number with its comparison, stated as percentage points or relative percent, saying which.
 - What was segmented and why.
@@ -87,6 +105,7 @@ Keep it under twenty lines. No brief here; the Deliver step writes the brief.
 - **The question is the gate.** No frame note, no analysis. Ask; never guess.
 - **The model reasons, the code computes.** Every number comes out of `analysis.py`. None comes from prose arithmetic.
 - **Always compare.** A number without its comparison is not a finding. When there is no comparison, say so.
+- **Orient before answering.** Know how many people are in each group and what is normal for them before computing anything about them.
 - **Quirks first.** Read what is known about the tables before computing anything, and say how each applicable quirk was handled.
 - **Closed periods only.** An open month or an unmatured trial is not a result.
 - **Name the unit of change.** Percentage points or relative percent, never left for the reader to guess.
