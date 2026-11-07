@@ -25,13 +25,17 @@ Why the skills work the way they do. The goal is a general analyst assistant for
 - **A fresh reader.** It runs in its own context, so it judges the work without the reasoning that produced it.
 - **Source data, not only code.** Clean code can sit on data whose meaning changes partway through the window, for example when a field starts being recorded differently. Only the data shows that, so `helpers.checks.stable_over_time` tests whether the fields a metric depends on are stable across compared periods.
 - **Small fix vs Needs the user.** A question the data can answer is never handed to the user; only judgement calls are.
-- **Recheck mode.** A fix that adds or changes a number the recommendation rests on goes back through validate, so the brief never leans on a number no reviewer saw.
+- **Recheck mode.** A fix that adds or changes a number the recommendation rests on goes back through validate, so the brief never leans on a number no reviewer saw. A recheck looks only at what changed, so reviews converge instead of starting over.
+- **Ranked and capped.** At most five findings that change the verdict, a claim or how sure the brief can be; the rest fold into one Note. A senior reviewer ranks, not lists.
+- **Checks that apply.** Targeting, money and projection checks run only when the decision targets groups, has a money side or rests on a projection, so a plain "what happened" question is not judged as a pricing decision.
+- **Learning across questions.** Validate proposes lasting source-data facts as quirk lines; the user decides whether they go into `quirks.md`, as with profile.
 
 ## Deliver
 - **Built from the frame and the analysis; the review only gates it and sets its limits.** A brief built around the review lists every caveat and ends on "it depends".
 - **Two readers.** The body is for the decider in business words; codes, files and checks go in the appendix.
 - **Commit to a recommendation**, say how sure, and name what would change it. When cause is unclear, name the cheapest way to find out, such as a holdout or a small test.
 - **Size it in money** for the whole affected group, taken from a CSV, never worked out in the brief.
+- **Short body.** The body stays under about 400 words; the appendix lists only the review findings that changed the brief, and counts the rest.
 
 ## Repo
 - **`outputs/` is gitignored**, so runs stay local by default. One run is force-added as a worked example.

@@ -31,4 +31,5 @@ Every step below follows these rules.
    - **Think on it:** apply the Small fix findings (a filter, a baseline, a label), rerun the script once, and carry the rest into the brief: Needs the user findings to Open for you or the Appendix (deliver sorts them), unapplied Small fix findings to the Appendix as not verified, and Notes to the Appendix as they are. If a fix adds a result or changes a number the recommendation rests on, validate once more; if that gives Fix first, stop and write no brief.
    - **Ship it:** go to deliver.
 5. Run the `deliver` skill on the run folder (`.claude/skills/deliver/SKILL.md`).
+   If `review.md` has Proposed quirks, ask about each with AskUserQuestion and append to `knowledge/beam/quirks.md` only on a yes.
 6. Finish with the path of the run folder, the verdict from `review.md`, and the Key Takeaways from `brief.md` copied verbatim. If the brief marks a number the Recommendation rests on as not verified, add one line naming it; the run is not complete until it is verified. Nothing else on the CLI.

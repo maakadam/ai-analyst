@@ -69,7 +69,8 @@ You write `outputs/<run>/brief.md` with exactly these headings. Other skills rea
 - Checked: <...>
 - Not checked: <...>
 - Out of scope: <...>
-- Review findings: <code> <label>: <one line on how it was handled, or "not verified">
+- Review findings: <code> <label>: <one line on how it was handled, or "not verified">, for each Small fix and Needs the user finding
+- Other review findings: <n> Notes, in review.md
 ```
 
 - Leave out Open for you and a chart when there is nothing to put there.
@@ -105,7 +106,7 @@ You write `outputs/<run>/brief.md` with exactly these headings. Other skills rea
 
 1. Find each number in the brief in a CSV in `data/`, and each claim it makes in a result table too. Fix or remove any you cannot find.
 2. Read only the Recommendation and Key Takeaways, as the decider would. They say what to do, how sure, and the limit that matters, with nothing to look up.
-3. Count: the body has no finding codes, file names or column names, at most two numbers in the Recommendation, at most two per takeaway.
+3. Count: the body (Question to Findings) is under about 400 words, has no finding codes, file names or column names, at most two numbers in the Recommendation, and at most two per takeaway.
 4. If the decision has a money side, the Recommendation says how much is at stake in money, or says it is not known.
 5. The recommendation follows from the findings, and no finding argues against it. A larger risk elsewhere in the results is named in the Recommendation or its "what would change this" line, not only as a limit further down.
 6. Every Needs the user and Small fix finding in `review.md` appears once in the Appendix.
