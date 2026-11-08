@@ -101,5 +101,3 @@ ai-analyst/
 Session-level data is not included.
 
 ---
-
-*Future Proof Data Science - Teaching data scientists to optimize workflows with AI*
