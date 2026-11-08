@@ -24,12 +24,12 @@ Grain (a guess from the data, confirm it): one row per payment_id. 100,914 rows.
 ## Meaning
 
 - `payment_id`: the payment's key (inferred).
-- `subscription_id`: the subscription paid for; every value matches `subscriptions` (inferred).
-- `payment_date`: when the charge happened (inferred). Starts 2025-01-01, so nothing before 2025 can be read from payments.
-- `amount_usd`: $10 or $12 for monthly, $100 for annual (inferred). Every monthly charge before 2026-03-01 is $10 and every one from 2026-03-01 is $12: all existing monthly subscribers moved to $12 at their first charge in March 2026 (quirk "Monthly price change").
+- `subscription_id`: the subscription paid for; every value matches `subscriptions`; no free subscription has a payment (inferred).
+- `payment_date`: when the charge happened. Starts 2025-01-01, so nothing before 2025 can be read from it (inferred).
+- `amount_usd`: monthly charges are $10 or $12, annual are $100. Every monthly charge up to 2026-02-28 is $10 and every one from 2026-03-01 is $12, with no $10 charge after that, so existing monthly subscribers moved to $12 at their first charge in March 2026. Annual stayed at $100 in 2025 and 2026 (inferred).
 - `method`: card, paypal, apple_pay, google_pay (inferred).
 
 Grain in plain words: one row per charge; monthly subscriptions usually have one charge per month, 1,603 subscription-months have two (inferred).
 
-No subscription has both monthly and annual amounts, so monthly-to-annual switches do not show here either.
-
+Facts from profiling on 2026-11-07:
+- No monthly subscription has a payment after its end date, and every active monthly subscription has paid since 2026-08-20, so the last payment is a reliable marker of when a monthly subscriber stopped paying (inferred).

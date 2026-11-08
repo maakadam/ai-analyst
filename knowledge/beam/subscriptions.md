@@ -26,15 +26,15 @@ Grain (a guess from the data, confirm it): one row per subscription_id. 30,747 r
 ## Meaning
 
 - `subscription_id`: the subscription's key; joins to `payments.subscription_id` (inferred).
-- `user_id`: the subscriber; joins to `users.user_id`. Exactly one subscription per user, so a plan switch (monthly to annual, paid to free) is not visible as a second row (inferred).
-- `plan`: free, monthly or annual (inferred). Free rows never end (quirk "Free plans never end").
-- `start_date`: when the subscription began; first payment falls on this day for paid plans started since Feb 2025 (inferred). 102 free rows and 582 paid rows start after 2026-09-24 (the free ones all trial users) (quirk "Future start dates").
-- `end_date`: when the subscription ended or will end; null means still running (inferred). 150 rows end after 2026-09-24, all status `canceled` (quirk "Future end dates"). Midnight-only times until Sep 2025, then a mix of real times (quirk on the October 2025 recording change in corrections.md).
-- `status`: active (no end date), canceled (end date set, 150 of 790 still in the future), expired (ended) (inferred).
+- `user_id`: the subscriber; joins to `users.user_id` without fan-out. Exactly one subscription per user, so plan switches (monthly to annual, paid to free) are not visible (inferred).
+- `plan`: free, monthly or annual. Free rows never have an end date and never have payments (quirk "Free plans never end").
+- `start_date`: when the subscription began. For paid plans started since Feb 2025 the first payment falls on the same day (all 7,040). Rows starting after 2026-09-24: 967 free, 425 monthly, 157 annual (quirk "Future start dates"). Bulk start days: 1,385 rows on 2025-09-17 (the September 2025 spike), 403 paid (302 monthly, 101 annual) on 2026-07-30, 582 paid on 2026-09-25 (inferred).
+- `end_date`: when the subscription ended or will end; null exactly when status is active. 162 end after 2026-09-24, all canceled (quirk "Future end dates"). Until 2025-09, monthly end dates are midnight and fall exactly 30 days after the last payment (a paid-through date); from 2025-10 a growing share carry real times and fall 1 to 30 days after the last payment, and 14% to 29% of monthly ends in 2025-10 to 2026-02 fall more than 31 days after the last payment (inferred).
+- `status`: active (no end date), canceled (end date set, may be in the future), expired (ended) (inferred).
 
 Grain in plain words: one row per user's subscription; a user has exactly one (inferred).
 
 Facts from profiling on 2026-11-07:
-- Monthly end dates per month jump from about 20-35 (2025-01 to 2025-09) to about 115-145 (2025-10 to 2026-03), the same month end-date times start changing; then to about 250-355 (2026-04 to 2026-09). Read the October 2025 jump with the recording change in mind.
-- 1,391 paid subscriptions have no payment row: 533 ended before payments start (2025-01-01); 582 paid subscriptions (425 monthly, 157 annual) start after 2026-09-24, so have no payment yet (scheduled starts, expected; corrected 2026-11-07); 235 started in the 2025-09 spike, all ended after 30-360 days with no payment (unexplained); the rest are small.
-
+- Monthly end dates per month: about 20-35 (2024-07 to 2025-08), 55 in 2025-09, about 115-145 (2025-10 to 2026-03), about 250-340 (2026-04 to 2026-07). Read these against the active base: the 1,181 monthly starts on the 2025-09 spike inflate both.
+- Monthly starts per month: about 140-220, except 1,181 in 2025-09, 67 in 2025-10 and 491 in 2026-07 (302 of them on 2026-07-30).
+- 1,391 paid subscriptions have no payment row: 533 ended before payments start (2025-01-01), 582 start after 2026-09-24, 235 started in the 2025-09 spike (unexplained), the rest are small.

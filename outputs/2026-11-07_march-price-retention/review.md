@@ -1,72 +1,62 @@
-# Review: March 2026 price increase and monthly retention (fourth recheck)
+# Review: March 2026 price increase and retention (sixth recheck)
 
 ## Verdict
-**Ship it**: the intro volume range (earlier A2) is in and the rerun matches all 18 files; volume changes the size of the intro rows, never their sign, so no rollback clearly pays over six months and the twelve-month passes stay tentative.
+**Think on it**: C1 is fixed and the rerun matches, so the money tables and the reach table now describe the same measured base, but the unexplained Sep/Oct 2025 change still needs the user and leaves season unchecked in the main comparison.
 
 ## Data flow
 ```mermaid
 flowchart LR
-  S[subscriptions.csv<br/>30,747 rows] --> P[paid, started by 2026-09-24<br/>11,931: 8,951 monthly, 2,980 annual]
-  PY[payments.csv<br/>100,914 rows] --> J[join on subscription_id<br/>100,914 kept, no fan-out]
-  T[trials.csv] --> SRC[source: trial convert or non-trial]
-  P --> CP[monthly churn panel by plan x tenure x start cohort<br/>Oct 2024 to Aug 2026, 136,057 at-risk months]
-  CP --> W[before Oct 2025-Feb 2026 vs after Mar-Jul 2026<br/>and Apr-Jul sensitivity]
-  W --> D[did_monthly_vs_annual_by_tenure.csv<br/>A5]
-  D --> CH2[did_by_tenure.png]
-  CP --> BY[churn_monthly_by_plan.csv] --> CH1[churn_by_plan.png]
-  CP --> CO[churn_after_by_tenure_and_start_cohort.csv]
-  CP --> HD[churn_by_month_joined_at_10.csv<br/>A3]
-  J --> PR[payment_stop_rate_by_period.csv<br/>A5]
-  CP --> SE[seasonality_year_earlier_did.csv<br/>A6]
-  P --> PP[paying subs only] --> H[band hazards: before, before without Sep 2025, after, joined at $12]
-  P --> MB[monthly base 1 Mar 2026: 5,358<br/>24 Sep 2026: 5,560, 0-2 band 573 trial + 609 non-trial]
-  SRC --> MB
-  SRC --> NS[new starters Aug 2026: 68 non-trial, 255 trial converts<br/>A2]
-  H --> M[money_rollback_by_tenure.csv<br/>6 and 12 months, 1,000 bootstrap draws, keep side calibrated]
-  MB --> M
-  NS --> M
-  M --> IV[intro_price_by_starter_volume.csv<br/>non-trial volume Mar-Aug 2026: 68 to 491<br/>A2]
-  J --> MC[money_model_vs_paid_by_tenure.csv<br/>6-11 months 5.5% off, logged]
-  MC --> M
-  M --> R[decision_rule_by_tenure.csv<br/>A1 A3]
-  D --> R
-  R --> CH3[rollback_gain_6m.png<br/>C1]
-  R --> CH4[rollback_gain_12m.png]
-  NS:::issue
-  IV:::issue
-  R:::issue
-  CH3:::issue
-  D:::issue
-  PR:::issue
-  SE:::issue
-  HD:::issue
+  S1[subscriptions 30,747] --> F1[drop trial users, start after 2026-07-31] --> J[join users: country, device]
+  T[trials] --> F1
+  U[users] --> J
+  P[payments 100,914] --> F2[join subs, next/prev payment gap; all monthly gaps 30 days]
+  J --> F2
+  F2 --> RN["monthly renewals: due = payment + 30, churned = no next payment; windows year_earlier, before, after, before_clean, after_steady"]
+  RN --> X1[drop 2025-09-17 block] --> H["headline_churn.csv (before_clean vs after_steady first, + churn_base_se)"]
+  X1 --> TW[churn_by_tenure_window.csv]
+  X1 --> SG[churn_by_segment.csv + churn_base_se]
+  X1 --> CX[churn_country_x_device.csv]
+  RN --> SER[churn_by_due_month.csv] --> CH1[churn_by_due_month.png]
+  SG --> CH2[churn_rise_by_country/device/tenure.png, 95% bars, overall line labelled]
+  F2 --> B["active base 2026-07-31, drops both bulk blocks: 4,599"] --> M[money_by_segment.csv, 12-month projection]
+  H --> M
+  SG --> M
+  F2 --> B0[base charged 2026-01-30 to 02-28: 4,572] --> OB["observed_revenue_mar_jul.csv, gain_low/high"]
+  SG --> OB
+  B0 --> OBM["observed_revenue_by_due_month.csv, gain_low/high"]
+  SG --> OBM
+  OBM --> GG["observed_gain_by_due_month_grouped.csv (tenure 1-6, 7-12, 13+)"] --> CH3[observed_gain_by_due_month.png]
+  J --> NS[paid starts, drop bulk days] --> NSW["new_paid_starts_by_window.csv, _by_month.csv, annual_share_by_country.csv"]
+  F2 --> AN[annual renewals, due = payment + 365] --> ANR[annual_renewals.csv]
+  F2 --> LV["monthly charged 2026-07-02 to 07-31: 5,461, by group and first year"] --> RR[rollback_reach_2026_07_31.csv]
+  RN:::issue
+  H:::issue
+  M:::issue
+  RR:::issue
+  OBM:::issue
+  GG:::issue
   classDef issue fill:#fde2e2
+  %% RN, H (year_earlier rows, season): A1 | RR, M: A2 | OBM, GG: A3 | M (tenure 1, bases): A4
 ```
 
 ## Code review
-- **C1 Note** The six-month chart title says every rollback option "loses revenue", which holds for the uncalibrated gains it plots, but with the keep side calibrated the 0-2 month cut is about break-even and both intro rows sit just above zero, all with intervals spanning zero. Where: analysis.py:500, rollback_gain_6m.png. Fix: in the brief say "none clearly pays over six months" rather than "every option loses".
+- No open code findings. Earlier C1 (money base kept the unmeasured 2026-07-30 block) is fixed at analysis.py:75 and analysis.py:213; see Checked.
 
 ## Analysis review
-- **A1 Note** (earlier A1, mostly fixed) The trial-convert rows are labelled "rate unmeasured" but still carry `rollback_recommended` True at twelve months and give the largest projected gain, while early evidence suggests trial converts churn less than non-trial $12 starters, which would shrink a rollback's gain. The non-trial rows pass at twelve months on their own, so the call does not rest on them. Where: decision_rule_by_tenure.csv, money_rollback_by_tenure.csv. Fix: in the brief, base any twelve-month case on the non-trial rows and show trial-convert rows as unmeasured, not as support.
-- **A2 Small fix** (earlier A2, changed) The intro range now scales over March to August volumes, but the non-trial group changed when trials launched on 2026-08-01: non-trial starts fell from about 200 a month to 68 in August and 126 in the first 24 days of September, and their median days from signup to start dropped from about 47 to 12-21, so the Mar-Jul volumes (and the median of 197) describe a group that no longer exists, and the $12 churn rate applied to the intro rows was measured on it too. Where: intro_price_by_starter_volume.csv, analysis.py:418. Fix: mark the months before trials launched as pre-launch in the range (or base the forward range on August and September volume), and say in the brief that the intro rows' churn rate comes from pre-launch starters.
-- **A3 Note** (earlier A3, unchanged in substance) No row passes the frame's six-month rule under any variant (main, Apr-Jul, without September 2025 starters, keep side calibrated); every pass is twelve-month only and flagged tentative; churn among $10 joiners eased in July, so the projected rate may not hold. Where: decision_rule_by_tenure.csv, churn_by_month_joined_at_10.csv. Fix: lead the brief with the six-month answer and present the newest-customer and intro options as a tentative twelve-month projection worth a test, not a rollout.
-- **A4 Note** (earlier A4, unchanged) The frame does not name the form of a tenure rollback; both forms (price cut for the current base, intro price for new starters) are sized side by side. Where: frame.md, money_rollback_by_tenure.csv. Fix: lay out both options in the brief.
-- **A5 Note** (earlier A5, unchanged) For 12-23 months the two churn measures point different ways (end-date churn up slightly, stopping payment down), and part (a) of the rule passes for every band, so only the money separates groups. Where: payment_stop_rate_by_period.csv, did_monthly_vs_annual_by_tenure.csv. Fix: give the brief the range from both measures and do not call the 12-23 rise clear.
-- **A6 Note** (earlier A6, unchanged) Season is not ruled out: before and after are different seasons and the same-months check sits before the October 2025 end-date step. Where: seasonality_year_earlier_did.csv. Fix: say so in the brief's limits.
-- **A7 Note** (earlier A7, unchanged) Plan switches cannot be seen and count as churn. Where: frame.md. Fix: keep it in the brief's limits.
+- **A1 Needs the user** Still open (unchanged): monthly subscribers who started before 2024 show no churn until Sep 2025 and about 1% a month from Oct 2025, and 2025 starters miss 7% to 14% of renewals in Sep-Oct 2025, which the data does not explain; the year-earlier baseline stays unusable and the main comparison (Nov-Feb winter against May-Jul summer) has no clean check for season. Where: subscriptions, payments; year_earlier rows of headline_churn.csv and churn_by_segment.csv. Fix: ask the user what changed in Sep/Oct 2025; until then the brief quotes no year_earlier row and says season is unchecked.
+- **A2 Note** Still holds, now consistent with the money tables: a first-year rollback at 2026-07-31 would reach 2,409 monthly subscribers, of whom 862 (560 from the 2025-09-17 block, 302 from the 2026-07-30 block) were never measured; the money tables now cover the 1,547 measured first-year and 3,052 later subscribers only, and the base it acts on today also holds trial converters from 2026-08-15, which both tables rightly leave out. Where: rollback_reach_2026_07_31.csv, money_by_segment.csv, frame.md Population. Fix: the brief states the result covers the organic non-trial base only, quotes money for the measured 4,599 and the reach with the unmeasured groups named, and keeps any count with trial converters out until the user lifts the exclusion.
+- **A3 Note** Unchanged: the gain chart title says months 1-6 "were below zero by July", which holds; the grouped table still carries no range and the ranges carry only the baseline churn's uncertainty, not the assumption that $10 would restore Nov-Feb churn. Where: observed_gain_by_due_month.png, observed_gain_by_due_month_grouped.csv. Fix: the brief keeps "by July", firmest for months 1 to 6, tentative for EU, India, Rest, Android, Web and tenure 7-12, and states the two horizons (5 observed months, 12 projected).
+- **A4 Note** Smaller points for the brief. New: with the block removed, the tenure "1" money row rests on 185 subscribers (was 487), so its dollar figure is small and should not be read alone. Still open: bar value labels collide with the error-bar caps (tenure 2-3, 4-6, 13-24 most visibly); the country by device cells are thin (read only the US/iOS low end); one segment rate is used for the whole counterfactual path; the observed base (4,572, charged Jan 30 to Feb 28) and the projected base (4,599, charged Jul 2 to Jul 31) are different people at different dates, close in size only by chance; churn rose in April and May, a month or two after the first $12 charge; 4 baseline months against 3; annual stays a weak background check; 83 of 541 before-window churns have a recorded end on or after 2026-03-01.
 
 ## Checked
-- Earlier findings: A2 changed (range added; now Small fix on which months stand for the future group); C1 and A1, A3-A7 still open as notes, unchanged by this round, since the only code change is the new range table and its print.
-- Rerun: copy with the root path moved up one level, exit clean, all 18 result files match; writes only inside its folder, prints aggregates only; join does not fan out; bands sum to totals; 6-11 month model check still off by 5.5% and logged. The range scales the intro gain, its interval and the calibrated gain linearly with volume, which holds because the intro rows are linear in starters.
-- Dates and windows: analysis date 2026-09-24 throughout; before Oct 2025-Feb 2026, after Mar-Jul 2026 with Apr-Jul as a sensitivity; August and partial September out of every compared window; the volume range uses complete months only (March to August 2026).
-- Source data (Act 6): earlier checks stand (end-time and last-payment-gap steps are mix and behaviour, not recording). New: non-trial monthly starts by month against source, country, device and signup-to-start lag. Country and device mix stay steady; the July jump (491, with annual starts also doubling) and the August fall come with the trial launch and a shorter signup-to-start lag, so the forward non-trial group differs from the measured one (A2).
-- Charts: chart code and all four charts unchanged since the last review; earlier chart checks stand (C1 on the six-month title wording).
+- Earlier findings: C1 fixed (money base now drops both bulk blocks, 4,599 = 3,052 + 1,547 measured in the reach table; segment counts add to 4,599 in every dimension; tenure "1" 185 = 487 minus 302); A1 still open; A2, A3 unchanged and carried; A4 carried with one new point.
+- Rerun from an unedited copy in rerun/ (previous copy and money table kept in rerun/prev/ as _prev6): all 14 result files match; all 17 CHECK lines ran and passed or reported the known end_date midnight break the script measures around.
+- Effect of the fix: every money figure shrinks by about 6% (overall main gain about -$6,950 against -$7,400 before, tenure "1" most); no gain, upper-bound or lower-bound value changes sign in any row, so no segment call moves. Churn tables are unaffected, since the 2026-07-30 starters have no renewal due by 2026-07-31.
+- Dates and windows: analysis date 2026-09-24 and window end 2026-07-31 respected everywhere; due months only Mar to Jul 2026; edge months complete; before_clean (Nov-Feb) and after_steady (May-Jul) differ in season and length, see A1 and A4.
+- Source data (Act 6): not repeated; the fix touched only which start days the money base drops, which reads start and payment dates already tested (monthly gaps stable at 30 days); earlier results stand, including the Sep/Oct 2025 change in A1.
 
 ## Not checked
-- Twelve-month projection beyond the data: not testable; the after rate has about four months behind it and eased in July.
-- Trial converts' churn beyond their first month: they only start from August 2026.
-- Why non-trial and annual starts jumped in July 2026: the data shows the timing next to the trial launch but not the cause.
-- The cost of running a targeted price (billing work, fairness complaints): not in the data.
-- Uncertainty in the calibration factor itself: the calibrated interval is the bootstrap interval shifted, not redrawn; the range table carries no calibrated interval at all.
-- brief.md was written before the range table existed; it was not reread, since deliver rebuilds it.
-- Nothing was written to `knowledge/beam/` by this run, so there was nothing to reconcile.
+- Charts: not reopened, as no chart reads the money base and all chart inputs match the rerun.
+- Whether rolling back to $10 would restore Nov-Feb churn (all money tables assume it would); no group stayed at $10, so the data cannot show it.
+- Plan switches, which the data cannot show (one subscription per user).
+- brief.md, which predates this fix; deliver rewrites it (its "$7,000, 4,901 subscribers" figures are now stale).

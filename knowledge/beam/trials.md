@@ -27,9 +27,8 @@ Grain (a guess from the data, confirm it): one row per trial_id. 2,073 rows.
 
 - `trial_id`: the trial's key (inferred).
 - `user_id`: the trial user; one trial per user (inferred).
-- `started_at` / `ends_at`: 14-day trial window; all trials start on or after 2026-08-01 (quirk "Trials mature late").
-- `outcome`: converted or canceled; empty for 418 open trials (20.2%), which have no subscription row yet (quirk "Trials mature late").
-- `outcome_at`: when the outcome happened; the subscription starts 0 to 10 days later (inferred). Converted trials become monthly (590) or annual (238); canceled ones become free (827).
+- `started_at` / `ends_at`: always 14 days apart; every trial starts on or after 2026-08-01 (quirk "Trials mature late").
+- `outcome`: converted (828) or canceled (827); empty for 418 open trials, all ending after 2026-09-24 and none with a subscription yet (quirk "Trials mature late").
+- `outcome_at`: when the outcome happened. Converted trials became monthly (590) or annual (238), canceled ones free (827); the earliest such subscription starts 2026-08-15 (inferred).
 
 Grain in plain words: one row per user's trial (inferred). No trials exist before the March 2026 price change, so trials cannot show a before/after.
-

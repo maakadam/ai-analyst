@@ -2,21 +2,10 @@
 
 Run from the repo root: poetry run python outputs/2026-11-07_march-price-retention/analysis.py
 
-Method (see frame.md):
-- Monthly churn = paid subscriptions active at the start of a month that end during it.
-- Split by plan and by tenure at the start of the month.
-- Baseline Oct 2025 to Feb 2026 (after the October 2025 end-date recording change),
-  after period Mar to Jul 2026. August 2026 end dates are recorded differently (all `canceled`,
-  some ending one to two months after the last payment; review A1), so August is shown on its
-  own and kept out of the after window. September 2026 is open: data ends on the 24th.
-- Difference-in-differences: change in monthly churn minus the annual plan's change. The annual
-  plan's all-tenure change is used for every monthly band, not the same-tenure annual change:
-  annual customers leave only at renewal, so their per-band rates are near zero and noisy. The
-  same-tenure annual change is saved alongside (did_monthly_vs_annual_by_tenure.csv).
-- Start cohort: newer bands split into customers who joined at $10 (before 2026-03-01) and at $12.
-- Independent check from payments: share of monthly payers in a month who pay again next month.
-- Money: six months of revenue from monthly subscribers active on 2026-03-01, at $12 with the
-  churn seen after the change, against $10 with baseline churn plus the annual plan's trend.
+Churn is measured per renewal from payments (quirk "End-date recording change"):
+monthly charges fall exactly every 30 days, so each charge has a renewal due 30 days
+later, and the subscriber churned at that renewal if no charge happened on it.
+Nothing due after 2026-07-31 is used (trials launched 2026-08-01; user's request).
 """
 
 import sys
@@ -25,7 +14,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[3]
+# The repo root is the nearest parent holding helpers/, so a copy deeper down still runs.
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / "helpers").is_dir())
 sys.path.insert(0, str(ROOT))
 from helpers import charts, checks  # noqa: E402
 
@@ -33,523 +23,476 @@ RUN = Path(__file__).resolve().parent
 OUT = RUN / "data"
 CH = RUN / "charts"
 OUT.mkdir(exist_ok=True)
-TODAY = pd.Timestamp("2026-09-24")
-BASE = pd.period_range("2025-10", "2026-02", freq="M")
-POST = pd.period_range("2026-03", "2026-07", freq="M")
-AUG = pd.period_range("2026-08", "2026-08", freq="M")
-YEAR_BASE = pd.period_range("2024-10", "2025-02", freq="M")
-YEAR_POST = pd.period_range("2025-03", "2025-08", freq="M")
-MONTHS = pd.period_range("2024-10", "2026-08", freq="M")
-BANDS = [(0, 2, "0-2 months"), (3, 5, "3-5 months"), (6, 11, "6-11 months"),
-         (12, 23, "12-23 months"), (24, 999, "24+ months")]
-BAND_ORDER = [b[2] for b in BANDS]
-OLD_PRICE, NEW_PRICE = 10.0, 12.0
-HORIZON = 6
-INTRO_MONTHS = 3  # introductory price lasts for tenure months 0-2
-RNG = np.random.default_rng(20260924)
-N_BOOT = 1000
-PRICE_DAY = pd.Timestamp("2026-03-01")
-SOURCE = "Source: subscriptions.csv, payments.csv; analysis.py"
-results_log = []
+CH.mkdir(exist_ok=True)
+
+WINDOW_END = pd.Timestamp("2026-07-31 23:59:59")
+WINDOWS = {  # renewal due dates
+    "year_earlier": (pd.Timestamp("2025-03-01"), pd.Timestamp("2025-07-31 23:59:59")),
+    "before": (pd.Timestamp("2025-09-01"), pd.Timestamp("2026-02-28 23:59:59")),
+    "after": (pd.Timestamp("2026-03-01"), WINDOW_END),
+    # Sensitivities (overlap the windows above): baseline without the Sep-Oct 2025
+    # anomaly, and the level once churn settled after the increase.
+    "before_clean": (pd.Timestamp("2025-11-01"), pd.Timestamp("2026-02-28 23:59:59")),
+    "after_steady": (pd.Timestamp("2026-05-01"), WINDOW_END),
+}
+MAIN_WINDOWS = ["year_earlier", "before", "after"]
+SPIKE_DAY = pd.Timestamp("2025-09-17")
+BULK_DAYS = [SPIKE_DAY, pd.Timestamp("2026-07-30")]
+TENURE_BINS = [0, 1, 3, 6, 12, 24, 10_000]
+TENURE_LABELS = ["1", "2-3", "4-6", "7-12", "13-24", "25+"]
+SRC = "Source: payments, subscriptions, users; analysis.py"
 
 
-def band_of(months):
-    out = pd.Series(index=months.index, dtype=object)
-    for lo, hi, name in BANDS:
-        out[(months >= lo) & (months <= hi)] = name
-    return out
-
-
-def log_check(name, res):
-    print(f"[check] {name}: {res['summary']}")
-    results_log.append({"check": name, "ok": res["ok"], "summary": res["summary"]})
+def say(check):
+    print("CHECK:", check["summary"])
+    return check
 
 
 # ---------------------------------------------------------------- load
 subs = pd.read_csv(ROOT / "data/subscriptions.csv", parse_dates=["start_date", "end_date"])
-pays = pd.read_csv(ROOT / "data/payments.csv", parse_dates=["payment_date"])
+pay = pd.read_csv(ROOT / "data/payments.csv", parse_dates=["payment_date"])
+users = pd.read_csv(ROOT / "data/users.csv", parse_dates=["signup_date"])
+trials = pd.read_csv(ROOT / "data/trials.csv", parse_dates=["started_at"])
 
-log_check("payments join onto subscriptions", checks.join_fan_out(
-    pays, subs[["subscription_id", "plan", "start_date"]], "subscription_id"))
-log_check("payment_date edges", checks.date_boundaries(pays, "payment_date"))
-log_check("subscriptions end_date edges", checks.date_boundaries(subs.dropna(subset=["end_date"]), "end_date"))
+print("Trials start on", trials.started_at.min().date(), "(after window end, so none are used)")
+trial_users = set(trials.user_id)
 
-# Compare on dates (quirk: timestamps everywhere).
-subs["start"] = subs.start_date.dt.normalize()
-subs["end"] = subs.end_date.dt.normalize()
-# Free plans never end: out. Scheduled starts after today: out. Future end dates: still active.
-paid = subs[(subs.plan != "free") & (subs.start <= TODAY)].copy()
-paid.loc[paid.end > TODAY, "end"] = pd.NaT
-has_pay = paid.subscription_id.isin(pays.subscription_id)
-sep25 = paid.start.dt.to_period("M") == pd.Period("2025-09", "M")
-print(f"Paid subscriptions: {len(paid):,} ({(paid.plan == 'monthly').sum():,} monthly, "
-      f"{(paid.plan == 'annual').sum():,} annual); free plans excluded.")
+say(checks.join_fan_out(pay, subs, "subscription_id"))
+say(checks.join_fan_out(subs, users, "user_id"))
 
-# Recording check (correction 2026-11-06): how end dates are logged, by end month.
-ended = subs.dropna(subset=["end_date"]).copy()
-ended["midnight_time"] = ended.end_date == ended.end_date.dt.normalize()
-stab = checks.stable_over_time(ended[ended.end_date >= "2024-01-01"], "end_date", "midnight_time")
-log_check("end_date recording over time", stab)
-stab["level_by_period"].rename("share_midnight").to_csv(OUT / "end_date_recording.csv")
+subs = subs[~subs.user_id.isin(trial_users)]
+subs = subs[subs.start_date <= WINDOW_END]
+subs = subs.merge(users[["user_id", "country", "device_type"]], on="user_id", how="left")
+subs["bulk_block"] = subs.start_date.dt.normalize().isin(BULK_DAYS)
+subs["spike_block"] = subs.start_date.dt.normalize() == SPIKE_DAY
 
+# ---------------------------------------------------------------- why payments, not end_date
+m_end = subs[(subs.plan == "monthly") & subs.end_date.notna() & (subs.end_date <= WINDOW_END)].copy()
+m_end["midnight"] = m_end.end_date.dt.time == pd.Timestamp("00:00").time()
+say(checks.stable_over_time(m_end, "end_date", "midnight"))
 
-# ---------------------------------------------------------------- monthly churn panel
-def churn_panel(frame):
-    rows = []
-    for m in MONTHS:
-        ms, me = m.start_time, m.end_time.normalize()
-        at = frame[(frame.start < ms) & (frame.end.isna() | (frame.end >= ms))]
-        months = ((ms - at.start).dt.days / 30.4375).astype(int)
-        churned = at.end.notna() & (at.end <= me)
-        g = pd.DataFrame({"plan": at.plan.values, "band": band_of(months).values,
-                          "cohort": np.where(at.start < PRICE_DAY, "joined at $10", "joined at $12"),
-                          "churned": churned.values})
-        agg = g.groupby(["plan", "band", "cohort"]).churned.agg(at_risk="size", churned="sum").reset_index()
-        agg["month"] = str(m)
-        rows.append(agg)
-    return pd.concat(rows, ignore_index=True)
+p = pay.merge(subs[["subscription_id", "plan", "start_date", "country", "device_type",
+                    "spike_block", "bulk_block"]], on="subscription_id", how="inner")
+p = p.sort_values(["subscription_id", "payment_date"])
+p["next_gap"] = p.groupby("subscription_id").payment_date.shift(-1).sub(p.payment_date).dt.days
+p["prev_gap"] = p.groupby("subscription_id").payment_date.diff().dt.days
+mp = p[p.plan == "monthly"]
+say(checks.stable_over_time(mp.dropna(subset=["prev_gap"]), "payment_date", "prev_gap"))
+assert set(mp.prev_gap.dropna().unique()) == {30.0}, "monthly charges are not all 30 days apart"
 
-
-panel = churn_panel(paid)
-panel.to_csv(OUT / "churn_monthly_by_plan_tenure.csv", index=False)
-
-# Parts sum to totals: band counts add back to the at-risk base per month.
-tot = sum(((paid.start < m.start_time) & (paid.end.isna() | (paid.end >= m.start_time))).sum() for m in MONTHS)
-log_check("tenure bands sum to the at-risk base", checks.parts_sum_to_total(panel.at_risk, tot))
-
-by_plan = panel.groupby(["month", "plan"])[["at_risk", "churned"]].sum().reset_index()
-by_plan["churn_rate"] = by_plan.churned / by_plan.at_risk
-by_plan.to_csv(OUT / "churn_monthly_by_plan.csv", index=False)
+# ---------------------------------------------------------------- renewals
+def renewals(plan, cycle_days):
+    r = p[p.plan == plan].copy()
+    r["due"] = r.payment_date + pd.Timedelta(days=cycle_days)
+    r["churned"] = r.next_gap.isna()
+    r["price_now"] = r.amount_usd
+    r["tenure_m"] = ((r.due - r.start_date).dt.days / 30).round().astype(int)
+    r["tenure"] = pd.cut(r.tenure_m, TENURE_BINS, labels=TENURE_LABELS, right=True)
+    parts = []
+    for name, (a, b) in WINDOWS.items():
+        parts.append(r[(r.due >= a) & (r.due <= b)].assign(window=name))
+    return pd.concat(parts, ignore_index=True)
 
 
-def period_rates(pnl, periods, label):
-    x = pnl[pnl.month.isin([str(p) for p in periods])]
-    a = x.groupby(["plan", "band"])[["at_risk", "churned"]].sum()
-    tot_ = x.groupby("plan")[["at_risk", "churned"]].sum()
-    tot_["band"] = "All tenures"
-    a = pd.concat([a.reset_index(), tot_.reset_index()])
-    a["period"] = label
-    return a
+ren_all = renewals("monthly", 30)
+mat = checks.matured_only(ren_all, "due", as_of=WINDOW_END)
+assert mat["dropped"] == 0
+# A renewal due before payments begin cannot be seen; due dates start 2025-03-01, so all are visible.
+say(checks.date_boundaries(ren_all[ren_all.window == "after"], "due"))
+say(checks.date_boundaries(ren_all[ren_all.window == "before"], "due"))
+ren = ren_all[~ren_all.spike_block]  # main: excludes the 2025-09-17 bulk block
 
 
-def did_table(pnl, base, post):
-    r = pd.concat([period_rates(pnl, base, "before"), period_rates(pnl, post, "after")])
-    w = r.pivot_table(index=["plan", "band"], columns="period", values=["at_risk", "churned"]).reset_index()
-    w.columns = ["plan", "band", "at_risk_after", "at_risk_before", "churned_after", "churned_before"]
-    w["rate_before"] = w.churned_before / w.at_risk_before
-    w["rate_after"] = w.churned_after / w.at_risk_after
-    w["change_pp"] = (w.rate_after - w.rate_before) * 100
-    w["change_rel"] = w.rate_after / w.rate_before - 1
-    w["se_pp"] = 100 * np.sqrt(w.rate_before * (1 - w.rate_before) / w.at_risk_before
-                               + w.rate_after * (1 - w.rate_after) / w.at_risk_after)
-    ann = w[(w.plan == "annual") & (w.band == "All tenures")].iloc[0]
-    mon = w[w.plan == "monthly"].copy()
-    mon["annual_change_pp"] = ann.change_pp
-    same = w[w.plan == "annual"].set_index("band").change_pp
-    mon["annual_same_tenure_change_pp"] = mon.band.map(same)
-    mon["did_pp"] = mon.change_pp - ann.change_pp
-    se = np.sqrt(mon.se_pp ** 2 + ann.se_pp ** 2)
-    mon["did_lo_pp"], mon["did_hi_pp"] = mon.did_pp - 1.96 * se, mon.did_pp + 1.96 * se
-    return w, mon
+def std_compare(df, a="before", b="after"):
+    """Churn in window b against window a reweighted to b's tenure mix, with a 95% range."""
+    g = df.groupby(["window", "tenure"], observed=True).churned.agg(["sum", "size"])
+    if a not in g.index.get_level_values(0) or b not in g.index.get_level_values(0):
+        return None
+    ga, gb = g.loc[a], g.loc[b]
+    bands = gb.index.intersection(ga.index)
+    gb, ga = gb.loc[bands], ga.loc[bands]
+    w = gb["size"] / gb["size"].sum()
+    rb, ra = gb["sum"] / gb["size"], ga["sum"] / ga["size"]
+    churn_b, churn_a = float((w * rb).sum()), float((w * ra).sum())
+    var = (w**2 * (rb * (1 - rb) / gb["size"] + ra * (1 - ra) / ga["size"])).sum()
+    se = float(np.sqrt(var))
+    diff = churn_b - churn_a
+    return {
+        f"renewals_{a}": int(ga["size"].sum()), f"renewals_{b}": int(gb["size"].sum()),
+        f"churns_{a}": int(ga["sum"].sum()), f"churns_{b}": int(gb["sum"].sum()),
+        f"churn_{a}_tenure_matched": churn_a, f"churn_{b}": churn_b,
+        f"churn_{a}_se": float(np.sqrt((w**2 * ra * (1 - ra) / ga["size"]).sum())),
+        "diff_pp": diff * 100, "diff_low_pp": (diff - 1.96 * se) * 100,
+        "diff_high_pp": (diff + 1.96 * se) * 100,
+        "rel_change": diff / churn_a if churn_a else np.nan,
+    }
 
 
-rates, did = did_table(panel, BASE, POST)
-did["band"] = pd.Categorical(did.band, BAND_ORDER + ["All tenures"], ordered=True)
-did = did.sort_values("band")
-rates.to_csv(OUT / "churn_before_after_by_plan_tenure.csv", index=False)
-did.to_csv(OUT / "did_monthly_vs_annual_by_tenure.csv", index=False)
+# ---------------------------------------------------------------- headline
+rows = []
+for label, df in [("main (excl. 2025-09-17 block)", ren), ("incl. 2025-09-17 block", ren_all)]:
+    # Main comparison first: clean baseline (Nov 2025-Feb 2026, outside the unexplained
+    # Sep-Oct 2025 churn bump) against the settled level (May-Jul 2026).
+    for a, b in [("before_clean", "after_steady"), ("before_clean", "after"),
+                 ("before", "after"), ("before", "after_steady"),
+                 ("year_earlier", "after"), ("year_earlier", "before")]:
+        res = std_compare(df, a, b)
+        rows.append({"sample": label, "baseline": a, "compared": b, **{
+            k.replace(f"_{a}", "_base").replace(f"_{b}", "_cmp"): v for k, v in res.items()}})
+headline = pd.DataFrame(rows)
+headline.to_csv(OUT / "headline_churn.csv", index=False)
 
-# August 2026 on its own (recording differs; review A1), next to the after window.
-aug = pd.concat([period_rates(panel, POST, "after (Mar-Jul 2026)"), period_rates(panel, AUG, "August 2026")])
-aug["churn_rate"] = aug.churned / aug.at_risk
-aug.to_csv(OUT / "churn_after_vs_august.csv", index=False)
+# raw by tenure band and window
+by_ten = (ren[ren.window.isin(MAIN_WINDOWS)].groupby(["window", "tenure"], observed=True).churned.agg(renewals="size", churns="sum")
+          .assign(churn=lambda d: d.churns / d.renewals).reset_index())
+by_ten.to_csv(OUT / "churn_by_tenure_window.csv", index=False)
 
-# Start cohort: within each band, joined at $10 vs joined at $12, after window only.
-coh = panel[(panel.plan == "monthly") & panel.month.isin([str(p) for p in POST])]
-coh = coh.groupby(["band", "cohort"])[["at_risk", "churned"]].sum().reset_index()
-coh["churn_rate"] = coh.churned / coh.at_risk
-base_band = rates[(rates.plan == "monthly")].set_index("band").rate_before
-coh["rate_before_all_joined_at_10"] = coh.band.map(base_band)
-coh["change_pp"] = (coh.churn_rate - coh.rate_before_all_joined_at_10) * 100
-coh.to_csv(OUT / "churn_after_by_tenure_and_start_cohort.csv", index=False)
+# monthly series
+one = ren_all[ren_all.window.isin(MAIN_WINDOWS)].copy()
+one["due_month"] = one.due.dt.to_period("M").astype(str)
+ser = (one.groupby(["due_month", "spike_block"]).churned.agg(renewals="size", churns="sum")
+       .reset_index())
+s_main = ser[~ser.spike_block].set_index("due_month")
+s_all = ser.groupby("due_month")[["renewals", "churns"]].sum()
+all_months = pd.period_range("2025-03", "2026-07", freq="M").astype(str)
+series = pd.DataFrame({
+    "renewals_main": s_main.renewals, "churn_main": s_main.churns / s_main.renewals,
+    "renewals_all": s_all.renewals, "churn_all": s_all.churns / s_all.renewals,
+}).reindex(all_months).rename_axis("due_month").reset_index()  # 2025-08 is outside every window
+series.to_csv(OUT / "churn_by_due_month.csv", index=False)
 
-# ---------------------------------------------------------------- payments-based retention (independent of end_date)
-mp = pays.merge(paid[["subscription_id", "plan", "start"]], on="subscription_id")
-mp = mp[mp.plan == "monthly"]
-mp["m"] = mp.payment_date.dt.to_period("M")
-pm = mp[["subscription_id", "m", "start"]].drop_duplicates(["subscription_id", "m"])
-keys = set(zip(pm.subscription_id, pm.m))
-pm["paid_next"] = [(s, m + 1) in keys for s, m in zip(pm.subscription_id, pm.m)]
-pm["band"] = band_of(((pm.m.dt.start_time - pm.start).dt.days / 30.4375).astype(int).clip(lower=0)).values
-# Last month that can be followed is July 2026: September 2026 is open.
-pm = pm[pm.m <= pd.Period("2026-07", "M")]
-pay_ret = pm.groupby(["m", "band"]).paid_next.agg(payers="size", paid_again="sum").reset_index()
-pay_ret["m"] = pay_ret.m.astype(str)
-pay_ret.to_csv(OUT / "payment_retention_monthly_by_tenure.csv", index=False)
-pay_m = pm.groupby("m").paid_next.mean()
+# ---------------------------------------------------------------- segments
+seg_rows = []
+for dim in ["country", "device_type", "tenure"]:
+    for val, df in ren.groupby(dim, observed=True):
+        for a, b in [("before_clean", "after_steady"), ("before_clean", "after"),
+                     ("before", "after"), ("year_earlier", "after")]:
+            res = std_compare(df, a, b)
+            if res:
+                seg_rows.append({"dimension": dim, "segment": str(val), "baseline": a,
+                                 "compared": b, **{
+                    k.replace(f"_{a}", "_base").replace(f"_{b}", "_cmp"): v
+                    for k, v in res.items()}})
+segments = pd.DataFrame(seg_rows)
+segments.to_csv(OUT / "churn_by_segment.csv", index=False)
 
+total_after = len(ren[ren.window == "after"])
+for dim in ["country", "device_type", "tenure"]:
+    parts = segments[(segments.dimension == dim) & (segments.baseline == "before")
+                     & (segments.compared == "after")].renewals_cmp
+    say(checks.parts_sum_to_total(parts, total_after))
 
-def pay_period(per, label):
-    x = pm[pm.m.isin(per)]
-    g = x.groupby("band").paid_next.agg(payers="size", paid_again="sum")
-    g.loc["All tenures"] = [len(x), x.paid_next.sum()]
-    g["stop_rate"] = 1 - g.paid_again / g.payers
-    g["period"] = label
-    return g.reset_index()
-
-
-# Payment months: Feb 2026 payers are the last who renew at $10 (their next charge is $12),
-# so the before window for "stopped paying next month" is Oct 2025 to Jan 2026.
-PAY_BASE = pd.period_range("2025-10", "2026-01", freq="M")
-PAY_TRANSITION = pd.period_range("2026-02", "2026-02", freq="M")
-PAY_POST = pd.period_range("2026-03", "2026-07", freq="M")
-pay_cmp = pd.concat([pay_period(PAY_BASE, "before"), pay_period(PAY_TRANSITION, "first $12 renewal"),
-                     pay_period(PAY_POST, "after"),
-                     pay_period(pd.period_range("2025-02", "2025-07", freq="M"), "a year earlier")])
-pay_cmp.to_csv(OUT / "payment_stop_rate_by_period.csv", index=False)
-
-# ---------------------------------------------------------------- seasonality: same months a year earlier
-_, did_year = did_table(panel, YEAR_BASE, YEAR_POST)
-did_year["band"] = pd.Categorical(did_year.band, BAND_ORDER + ["All tenures"], ordered=True)
-did_year.sort_values("band").to_csv(OUT / "seasonality_year_earlier_did.csv", index=False)
-
-# ---------------------------------------------------------------- robustness
-robust = [did.assign(variant="main")]
-for name, mask in [("without Sep 2025 starts", ~sep25), ("without paid subs that have no payments", has_pay)]:
-    _, d = did_table(churn_panel(paid[mask]), BASE, POST)
-    robust.append(d.assign(variant=name))
-robust = pd.concat(robust)
-robust["band"] = robust.band.astype(str)
-robust[["variant", "band", "rate_before", "rate_after", "change_pp", "did_pp", "did_lo_pp", "did_hi_pp"]].to_csv(
-    OUT / "robustness_did.csv", index=False)
-
+# country x device cross, main comparison
+cross = []
+for (c, d), df in ren.groupby(["country", "device_type"]):
+    res = std_compare(df, "before_clean", "after_steady")
+    if res:
+        cross.append({"country": c, "device_type": d, "baseline": "before_clean",
+                      "compared": "after_steady", **{
+                          k.replace("_before_clean", "_base").replace("_after_steady", "_cmp"): v
+                          for k, v in res.items()}})
+pd.DataFrame(cross).to_csv(OUT / "churn_country_x_device.csv", index=False)
 
 # ---------------------------------------------------------------- money
-# Two forms of a tenure-based rollback are sized (review A4):
-#   1. Price cut for the monthly base on the analysis date (2026-09-24), by tenure band: $10 with
-#      baseline churn plus the annual trend, against $12 with the churn seen after the change.
-#   2. Introductory price: every new monthly starter pays $10 for their first 3 months, then $12.
-# The 1 March 2026 base is also modelled over the six observed months, to check the model against
-# months actually paid (review C1) and to show the observed answer next to the projected one.
-# Money uses paying subscriptions only (review A2): rows with no payment would add months nobody paid.
-MIN_CELL = 500  # smallest at-risk count for a joined-at-$12 rate to be used on its own
-panel_pay = churn_panel(paid[has_pay])
-POST_APR = pd.period_range("2026-04", "2026-07", freq="M")  # sensitivity: churn rises from April (review A5)
-ann_shift = did.annual_change_pp.iloc[0] / 100  # annual plan's change, added to the baseline
+def twelve_month_rev(price, churn):
+    r = 1 - churn
+    return price * sum(r**k for k in range(12))
 
 
-def cells(pnl, periods, by_cohort):
-    x = pnl[(pnl.plan == "monthly") & pnl.month.isin([str(p) for p in periods])]
-    return x.groupby(["band", "cohort"] if by_cohort else "band")[["at_risk", "churned"]].sum()
+def breakeven(churn_before):
+    target = twelve_month_rev(10, churn_before)
+    lo, hi = churn_before, 0.99
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        lo, hi = (mid, hi) if twelve_month_rev(12, mid) > target else (lo, mid)
+    return mid
 
 
-def draw(cell, rng):
-    """One bootstrap draw of a hazard table (binomial on each cell); rng=None returns the point rates."""
-    p = cell.churned / cell.at_risk
-    if rng is None:
-        return p
-    return rng.binomial(cell.at_risk, p) / cell.at_risk
+# active monthly base on 2026-07-31: charged in the 30 days up to it (one charge per 30 days)
+base = mp[(mp.payment_date > WINDOW_END - pd.Timedelta(days=30)) & (mp.payment_date <= WINDOW_END)]
+base = base[~base.bulk_block]  # drop both bulk blocks (2025-09-17, 2026-07-30): not measured
+assert base.subscription_id.is_unique
+def money_for(a, b):
+    rows_ = []
+    hrow = headline[(headline["sample"].str.startswith("main")) & (headline.baseline == a)
+                    & (headline.compared == b)].iloc[0]
+    seg_ab = segments[(segments.baseline == a) & (segments.compared == b)]
+    for _, srow in pd.concat([
+        pd.DataFrame([{"dimension": "all", "segment": "all",
+                       **hrow[["churn_base_tenure_matched", "churn_cmp",
+                               "diff_low_pp", "diff_high_pp"]].to_dict()}]),
+        seg_ab,
+    ]).iterrows():
+        dim, val = srow.dimension, srow.segment
+        if dim == "all":
+            n = len(base)
+        elif dim == "tenure":
+            # tenure at the next renewal, banded the same way as renewals
+            t = pd.cut(((base.payment_date + pd.Timedelta(days=30) - base.start_date).dt.days
+                        / 30).round(), TENURE_BINS, labels=TENURE_LABELS)
+            n = int((t.astype(str) == val).sum())
+        else:
+            n = int((base[dim] == val).sum())
+        cb, ca = srow.churn_base_tenure_matched, srow.churn_cmp
+        rev12 = n * twelve_month_rev(12, ca)
+        rev10 = n * twelve_month_rev(10, cb)
+        be = breakeven(cb)
+        rows_.append({
+            "baseline": a, "compared": b,
+            "dimension": dim, "segment": val, "active_base_2026_07_31": n,
+            "churn_before_tenure_matched": cb, "churn_after": ca,
+            "breakeven_churn_at_12": be, "after_minus_breakeven_pp": (ca - be) * 100,
+            "rev12m_keep_12_usd": rev12, "rev12m_rollback_10_usd": rev10,
+            "gain_from_increase_usd": rev12 - rev10,
+            # worst and best case inside the 95% range of the churn rise
+            "gain_if_rise_at_upper_bound_usd": n * twelve_month_rev(
+                12, cb + srow.diff_high_pp / 100) - rev10,
+            "gain_if_rise_at_lower_bound_usd": n * twelve_month_rev(
+                12, cb + srow.diff_low_pp / 100) - rev10,
+        })
+    return rows_
 
 
-def keep_hazard(band, joined_at_12, hp, hp12):
-    """After-change monthly churn for a subscriber: the joined-at-$12 rate where that cell is large enough."""
-    if joined_at_12 and (band, "joined at $12") in hp12.index and HP12_N.get(band, 0) >= MIN_CELL:
-        return hp12[(band, "joined at $12")]
-    return hp[band]
+money_rows = (money_for("before_clean", "after_steady") + money_for("before_clean", "after")
+              + money_for("before", "after"))
+money = pd.DataFrame(money_rows)
+money.to_csv(OUT / "money_by_segment.csv", index=False)
+
+# ---------------------------------------------------------------- observed Mar-Jul 2026 revenue
+# Existing base: monthly subscribers charged in the 30 days to 2026-02-28 (one charge each).
+# Observed: what they actually paid on renewals due 2026-03-01 to 2026-07-31 (all at $12).
+# Counterfactual: $10 on the same renewals if each had survived at the segment's
+# tenure-matched Nov 2025-Feb 2026 churn.
+feb_end = pd.Timestamp("2026-02-28 23:59:59")
+b0 = mp[(mp.payment_date > feb_end - pd.Timedelta(days=30)) & (mp.payment_date <= feb_end)
+        & ~mp.spike_block].copy()
+assert b0.subscription_id.is_unique
+b0["n_due"] = ((WINDOW_END - b0.payment_date).dt.days // 30).astype(int)
+b0["tenure"] = pd.cut(((b0.payment_date + pd.Timedelta(days=30) - b0.start_date).dt.days / 30)
+                      .round(), TENURE_BINS, labels=TENURE_LABELS).astype(str)
+obs = mp[mp.subscription_id.isin(b0.subscription_id) & (mp.payment_date > feb_end)
+         & (mp.payment_date <= WINDOW_END)]
+assert (obs.amount_usd == 12).all()
+paid_obs = obs.groupby("subscription_id").amount_usd.sum()
+b0["observed_usd"] = b0.subscription_id.map(paid_obs).fillna(0)
+seg_main = segments[(segments.baseline == "before_clean") & (segments.compared == "after_steady")]
+def expected_by_month(g, r):
+    """Expected renewals paid per due month for base g if each survives at rate r."""
+    exp = {}
+    for pdate, k_max in zip(g.payment_date, g.n_due):
+        for k in range(1, k_max + 1):
+            mth = str((pdate + pd.Timedelta(days=30 * k)).to_period("M"))
+            exp[mth] = exp.get(mth, 0) + r**k
+    return exp
 
 
-def band1(m):
-    """Tenure band name for one tenure in months (fast scalar version of band_of)."""
-    for lo, hi, name in BANDS:
-        if lo <= m <= hi:
-            return name
+def base_churn(dim, val):
+    row = (headline.iloc[0] if dim == "all" else
+           seg_main[(seg_main.dimension == dim) & (seg_main.segment == str(val))].iloc[0])
+    return row.churn_base_tenure_matched, row.churn_base_se
 
 
-def months_alive(t0, joined12, horizon, hb, hp, hp12, rollback):
-    """Expected paid months per subscriber over `horizon`, one charge a month while alive.
+# The 95% range comes from the uncertainty in the baseline churn the counterfactual uses:
+# a higher baseline churn means fewer $10 renewals and so a larger gain.
+obs_rows, due_rows = [], []
+obs_m = obs.assign(due_month=obs.payment_date.dt.to_period("M").astype(str)) \
+    .merge(b0[["subscription_id", "tenure"]], on="subscription_id")
+for dim in ["all", "country", "device_type", "tenure"]:
+    groups = [("all", b0)] if dim == "all" else list(b0.groupby(dim))
+    for val, g in groups:
+        cb, se_cb = base_churn(dim, val)
+        e_mid, e_lo, e_hi = (expected_by_month(g, 1 - c)
+                             for c in (cb, cb + 1.96 * se_cb, max(cb - 1.96 * se_cb, 0)))
+        o = obs_m if dim == "all" else obs_m[obs_m[dim].astype(str) == str(val)]
+        o = o.groupby("due_month").amount_usd.sum()
+        observed_total = g.observed_usd.sum()
+        obs_rows.append({
+            "dimension": dim, "segment": str(val), "base_2026_02_28": len(g),
+            "observed_mar_jul_usd": observed_total,
+            "counterfactual_10_baseline_churn_usd": 10 * sum(e_mid.values()),
+            "observed_gain_usd": observed_total - 10 * sum(e_mid.values()),
+            "observed_gain_low_usd": observed_total - 10 * sum(e_hi.values()),
+            "observed_gain_high_usd": observed_total - 10 * sum(e_lo.values()),
+            "churn_base_used": cb,
+        })
+        for mth in sorted(e_mid):
+            ob = float(o.get(mth, 0))
+            due_rows.append({"dimension": dim, "segment": str(val), "due_month": mth,
+                             "observed_usd": ob, "counterfactual_usd": 10 * e_mid[mth],
+                             "gain_usd": ob - 10 * e_mid[mth],
+                             "gain_low_usd": ob - 10 * e_hi[mth],
+                             "gain_high_usd": ob - 10 * e_lo[mth]})
+observed = pd.DataFrame(obs_rows)
+by_due = pd.DataFrame(due_rows)
+by_due.to_csv(OUT / "observed_revenue_by_due_month.csv", index=False)
+tot = by_due[by_due.dimension == "all"]
+say(checks.parts_sum_to_total(tot.gain_usd, float(observed_gain_all := (
+    sum(r["observed_gain_usd"] for r in obs_rows if r["dimension"] == "all")))))
+observed.to_csv(OUT / "observed_revenue_mar_jul.csv", index=False)
+for dim in ["country", "device_type", "tenure"]:
+    say(checks.parts_sum_to_total(observed[observed.dimension == dim].observed_mar_jul_usd,
+                                  observed[observed.dimension == "all"].observed_mar_jul_usd.iloc[0]))
+m1 = money[(money.baseline == "before_clean") & (money.compared == "after_steady")]
+for dim in ["country", "device_type", "tenure"]:
+    say(checks.parts_sum_to_total(m1[m1.dimension == dim].active_base_2026_07_31,
+                                  m1[m1.dimension == "all"].active_base_2026_07_31.iloc[0]))
 
-    Subscribers with the same starting tenure and price cohort share a path, so each path is
-    computed once and mapped back.
-    """
-    key = pd.Series(list(zip(t0, joined12)))
-    paths = {}
-    for t, j in key.unique():
-        alive, total = 1.0, 0.0
-        for k in range(horizon):
-            total += alive
-            b = band1(t + k)
-            hz = hb[b] + ann_shift if rollback else keep_hazard(b, j, hp, hp12)
-            alive *= 1 - min(max(hz, 0), 1)
-        paths[(t, j)] = total
-    return key.map(paths).values
+# ---------------------------------------------------------------- new starts
+paid = subs[(subs.plan != "free") & ~subs.bulk_block].copy()
+paid["start_month"] = paid.start_date.dt.to_period("M")
+for name in MAIN_WINDOWS + ["before_clean"]:
+    a, b = WINDOWS[name]
+    paid[f"in_{name}"] = (paid.start_date >= a) & (paid.start_date <= b)
+starts_m = paid.groupby(["start_month", "plan"]).size().unstack(fill_value=0)
+starts_m = starts_m.loc["2025-03":"2026-07"].reset_index()
+starts_m["start_month"] = starts_m.start_month.astype(str)
+starts_m["annual_share"] = starts_m.annual / (starts_m.annual + starts_m.monthly)
+starts_m.to_csv(OUT / "new_paid_starts_by_month.csv", index=False)
+months_in = {"year_earlier": 5, "before": 6, "after": 5, "before_clean": 4}
+sw = pd.DataFrame({w: paid[paid[f"in_{w}"]].plan.value_counts() for w in months_in}).T
+sw.index.name = "window"
+sw["months"] = pd.Series(months_in)
+sw["monthly_per_month"] = sw.monthly / sw.months
+sw["annual_per_month"] = sw.annual / sw.months
+sw["annual_share"] = sw.annual / (sw.annual + sw.monthly)
+p_a, n_a = sw.loc["after", "annual_share"], sw.loc["after", ["annual", "monthly"]].sum()
+for base_w in ["year_earlier", "before_clean"]:
+    p_b, n_b = sw.loc[base_w, "annual_share"], sw.loc[base_w, ["annual", "monthly"]].sum()
+    se_sh = np.sqrt(p_a * (1 - p_a) / n_a + p_b * (1 - p_b) / n_b)
+    sw.loc["after", f"annual_share_diff_vs_{base_w}_pp"] = (p_a - p_b) * 100
+    sw.loc["after", f"annual_share_diff_vs_{base_w}_low_pp"] = (p_a - p_b - 1.96 * se_sh) * 100
+    sw.loc["after", f"annual_share_diff_vs_{base_w}_high_pp"] = (p_a - p_b + 1.96 * se_sh) * 100
+    sw.loc["after", f"monthly_per_month_rel_vs_{base_w}"] = (
+        sw.loc["after", "monthly_per_month"] / sw.loc[base_w, "monthly_per_month"] - 1)
+    # Poisson range on the ratio of monthly start rates
+    lr = np.log(sw.loc["after", "monthly_per_month"] / sw.loc[base_w, "monthly_per_month"])
+    se_lr = np.sqrt(1 / sw.loc["after", "monthly"] + 1 / sw.loc[base_w, "monthly"])
+    sw.loc["after", f"monthly_per_month_rel_vs_{base_w}_low"] = np.exp(lr - 1.96 * se_lr) - 1
+    sw.loc["after", f"monthly_per_month_rel_vs_{base_w}_high"] = np.exp(lr + 1.96 * se_lr) - 1
+sw.reset_index().to_csv(OUT / "new_paid_starts_by_window.csv", index=False)
+paid["window"] = np.where(paid.in_after, "after", np.where(paid.in_before_clean, "before_clean", None))
+sc = (paid[paid.window.isin(["before_clean", "after"])].groupby(["country", "window", "plan"]).size()
+      .unstack(fill_value=0).assign(annual_share=lambda d: d.annual / (d.annual + d.monthly))
+      .reset_index())
+sc.to_csv(OUT / "annual_share_by_country.csv", index=False)
 
-
-trial_users = set(pd.read_csv(ROOT / "data/trials.csv").user_id)
-
-
-def base_at(day):
-    b = paid[(paid.plan == "monthly") & has_pay & (paid.start < day) & (paid.end.isna() | (paid.end >= day))].copy()
-    b["t0"] = ((day - b.start).dt.days / 30.4375).astype(int)
-    b["band"] = band_of(b.t0).values
-    b["joined12"] = b.start >= PRICE_DAY
-    b["trial"] = b.user_id.isin(trial_users)
-    return b
-
-
-base_mar = base_at(PRICE_DAY)
-base_today = base_at(TODAY)
-print(f"Monthly paying base: {len(base_mar):,} on 2026-03-01, {len(base_today):,} on 2026-09-24 "
-      f"(paid subscriptions with no payments left out).")
-
-# New monthly starters a month, from the last complete month (August 2026), split by source
-# (review A1): non-trial starts fell after July's one-month jump, and trial converts only exist
-# from August. The Mar-Jul non-trial average is printed for context.
-mstart = paid[(paid.plan == "monthly") & has_pay]
-NEW_NONTRIAL_MARJUL = ((mstart.start >= PRICE_DAY) & (mstart.start < pd.Timestamp("2026-08-01"))
-                       & ~mstart.user_id.isin(trial_users)).sum() / 5
-NEW_NONTRIAL = ((mstart.start.dt.to_period("M") == pd.Period("2026-08", "M")) & ~mstart.user_id.isin(trial_users)).sum()
-NEW_TRIAL = ((mstart.start.dt.to_period("M") == pd.Period("2026-08", "M")) & mstart.user_id.isin(trial_users)).sum()
-
-
-def intro_total(horizon, starters, hb, hp, hp12):
-    """Revenue over `horizon` months from `starters` new monthly customers a month: keep $12 vs $10 intro."""
-    keep = intro = 0.0
-    for entry in range(horizon):
-        alive_k = alive_i = 1.0
-        for k in range(horizon - entry):
-            band = band1(k)
-            hk = keep_hazard(band, True, hp, hp12)
-            keep += NEW_PRICE * alive_k
-            alive_k *= 1 - hk
-            if k < INTRO_MONTHS:
-                intro += OLD_PRICE * alive_i
-                alive_i *= 1 - min(max(hb[band] + ann_shift, 0), 1)
-            else:
-                intro += NEW_PRICE * alive_i
-                alive_i *= 1 - hk
-    return starters * keep, starters * intro
-
-
-def money(base, horizon, hb, hp, hp12, label):
-    keep = months_alive(base.t0.values, base.joined12.values, horizon, hb, hp, hp12, rollback=False)
-    roll = months_alive(base.t0.values, base.joined12.values, horizon, hb, hp, hp12, rollback=True)
-    df = pd.DataFrame({"band": base.band.values, "keep": keep, "roll": roll})
-    g = df.groupby("band").agg(subscribers=("keep", "size"), months_keep_12=("keep", "sum"),
-                               months_rollback_10=("roll", "sum")).reset_index()
-    g.loc[len(g)] = ["All tenures", len(df), df.keep.sum(), df.roll.sum()]
-    # The newest band split by source (review A1). Trial converts get the non-trial $12 rate:
-    # their own churn is not measurable yet (trials began 2026-08-01), so their rows are unmeasured.
-    for src, mask in ([("0-2 months, trial converts (rate unmeasured)", base.trial.values),
-                       ("0-2 months, non-trial", ~base.trial.values)] if label.startswith("base on 2026-09-24") else []):
-        s = df[(df.band == "0-2 months").values & mask]
-        g.loc[len(g)] = [src, len(s), s.keep.sum(), s.roll.sum()]
-    g["revenue_keep_12"] = NEW_PRICE * g.months_keep_12
-    g["revenue_rollback_10"] = OLD_PRICE * g.months_rollback_10
-    g["form"] = label
-    rows = [g]
-    if label.startswith("base on 2026-09-24"):
-        for name, n in [("Intro price, non-trial starters", NEW_NONTRIAL),
-                        ("Intro price, trial converts (rate unmeasured)", NEW_TRIAL)]:
-            k, i = intro_total(horizon, n, hb, hp, hp12)
-            rows.append(pd.DataFrame([{"band": name, "subscribers": n * horizon, "months_keep_12": np.nan,
-                                       "months_rollback_10": np.nan, "revenue_keep_12": k,
-                                       "revenue_rollback_10": i,
-                                       "form": label.replace("base on 2026-09-24", "introductory price, new starters")}]))
-    out = pd.concat(rows, ignore_index=True)
-    out["rollback_gain"] = out.revenue_rollback_10 - out.revenue_keep_12
-    return out
-
-
-cb = cells(panel_pay, BASE, False)
-# Sensitivity (review A2): baseline churn without the September 2025 spike starters.
-cb_nosep = cells(churn_panel(paid[has_pay & ~sep25]), BASE, False)
-SCENARIOS = [("base on 2026-03-01, observed months", base_mar, POST, 6, cb),
-             ("base on 2026-09-24", base_today, POST, 6, cb), ("base on 2026-09-24", base_today, POST, 12, cb),
-             ("base on 2026-09-24, after window Apr-Jul", base_today, POST_APR, 6, cb),
-             ("base on 2026-09-24, after window Apr-Jul", base_today, POST_APR, 12, cb),
-             ("base on 2026-09-24, baseline without Sep 2025 starts", base_today, POST, 6, cb_nosep),
-             ("base on 2026-09-24, baseline without Sep 2025 starts", base_today, POST, 12, cb_nosep)]
-money_tables = []
-for label, base, post, hz, cb in SCENARIOS:
-    cp, cp12 = cells(panel_pay, post, False), cells(panel_pay, post, True)
-    HP12_N = cp12.xs("joined at $12", level="cohort").at_risk.to_dict()
-    point = money(base, hz, draw(cb, None), draw(cp, None), draw(cp12, None), label)
-    sims = [money(base, hz, draw(cb, RNG), draw(cp, RNG), draw(cp12, RNG), label).set_index("band").rollback_gain
-            for _ in range(N_BOOT)]
-    sims = pd.concat(sims, axis=1)
-    point["rollback_gain_lo"] = point.band.map(sims.quantile(0.025, axis=1))
-    point["rollback_gain_hi"] = point.band.map(sims.quantile(0.975, axis=1))
-    point["horizon_months"] = hz
-    money_tables.append(point)
-money_df = pd.concat(money_tables, ignore_index=True)
-
-# Model check, per band (review C1): modelled $12 months for the 1 March base against months paid Mar-Aug.
-MONEY_MONTHS = pd.period_range("2026-03", "2026-08", freq="M")
-paid_m = (mp[mp.subscription_id.isin(base_mar.subscription_id) & mp.m.isin(MONEY_MONTHS)]
-          .drop_duplicates(["subscription_id", "m"]).merge(base_mar[["subscription_id", "band"]])
-          .groupby("band").size())
-paid_m["All tenures"] = paid_m.sum()
-mar = money_df[money_df.form == "base on 2026-03-01, observed months"].set_index("band")
-model_ok = []
-for band, r in mar.iterrows():
-    res = checks.parts_sum_to_total([r.months_keep_12], paid_m[band], tolerance=0.05)
-    log_check(f"modelled vs paid months, {band}", res)
-    model_ok.append({"band": band, "modelled_months": r.months_keep_12, "paid_months": paid_m[band],
-                     "paid_over_modelled": paid_m[band] / r.months_keep_12, "within_5pct": res["ok"]})
-model_ok = pd.DataFrame(model_ok)
-model_ok.to_csv(OUT / "money_model_vs_paid_by_tenure.csv", index=False)
-# The model overstates paid months on the keep ($12) side in most bands, which leans against a
-# rollback (review C1). Correct the keep side only by paid/modelled from the 1 March base; the
-# newest-band splits and the intro rows take the 0-2 month factor. For the 1 March base the keep
-# side is replaced by months actually paid.
-factor = model_ok.set_index("band").paid_over_modelled
-fband = money_df.band.where(money_df.band.isin(factor.index), "0-2 months")
-money_df["paid_over_modelled"] = fband.map(factor)
-money_df["revenue_keep_12_calibrated"] = money_df.revenue_keep_12 * money_df.paid_over_modelled
-is_mar = money_df.form == "base on 2026-03-01, observed months"
-money_df.loc[is_mar, "revenue_keep_12_calibrated"] = NEW_PRICE * money_df.loc[is_mar, "band"].map(paid_m)
-money_df["rollback_gain_calibrated"] = money_df.revenue_rollback_10 - money_df.revenue_keep_12_calibrated
-money_df["rollback_gain_calibrated_lo"] = money_df.rollback_gain_lo + money_df.rollback_gain_calibrated - money_df.rollback_gain
-money_df.to_csv(OUT / "money_rollback_by_tenure.csv", index=False)
-
-# Intro price over a range of new-starter volumes. The intro rows are linear in the number of
-# starters a month, so the August-based gain (and its interval) scales to each complete month's
-# non-trial volume from March to August 2026. September 2026 is open and left out.
-vol = (mstart[(mstart.start >= PRICE_DAY) & (mstart.start < pd.Timestamp("2026-09-01"))
-              & ~mstart.user_id.isin(trial_users)]
-       .start.dt.to_period("M").value_counts().sort_index())
-intro_rows = money_df[money_df.form.str.startswith("introductory price")
-                      & (money_df.band == "Intro price, non-trial starters")]
-vr = []
-for r in intro_rows.itertuples():
-    per = 1 / NEW_NONTRIAL
-    for m, n in list(vol.items()) + [("median Mar-Aug", vol.median()), ("lowest", vol.min()), ("highest", vol.max())]:
-        vr.append({"form": r.form, "horizon_months": r.horizon_months, "volume_month": str(m),
-                   "starters_per_month": n, "rollback_gain": r.rollback_gain * per * n,
-                   "rollback_gain_lo": r.rollback_gain_lo * per * n, "rollback_gain_hi": r.rollback_gain_hi * per * n,
-                   "rollback_gain_calibrated": r.rollback_gain_calibrated * per * n})
-intro_range = pd.DataFrame(vr)
-intro_range.to_csv(OUT / "intro_price_by_starter_volume.csv", index=False)
-
-for label in money_df.form.unique():
-    for hz in money_df[money_df.form == label].horizon_months.unique():
-        x = money_df[(money_df.form == label) & (money_df.horizon_months == hz) & money_df.band.isin(BAND_ORDER)]
-        tot_ = money_df[(money_df.form == label) & (money_df.horizon_months == hz) & (money_df.band == "All tenures")]
-        if len(tot_):
-            log_check(f"money bands sum to total, {label}, {hz} months",
-                      checks.parts_sum_to_total(x.rollback_gain, tot_.rollback_gain.iloc[0]))
-
-# Has the extra churn among survivors held? Monthly churn for subscribers who joined at $10, by month.
-held = panel[(panel.plan == "monthly") & (panel.cohort == "joined at $10")
-             & panel.month.isin([str(p) for p in BASE.append(POST)])]
-held = held.groupby("month")[["at_risk", "churned"]].sum().reset_index()
-held["churn_rate"] = held.churned / held.at_risk
-held.to_csv(OUT / "churn_by_month_joined_at_10.csv", index=False)
-
-# Decision rule from the frame: extra churn clearly above zero AND $10 beats $12 (interval above zero).
-did_s = did.assign(band=did.band.astype(str))
-rob_apr = did_table(panel, BASE, POST_APR)[1]
-rob_apr["band"] = rob_apr.band.astype(str)
-robust_apr = rob_apr[["band", "did_pp", "did_lo_pp", "did_hi_pp"]].rename(
-    columns=lambda c: c + "_apr_jul" if c != "band" else c)
-robust_apr.to_csv(OUT / "did_after_window_apr_jul.csv", index=False)
-rule = money_df.merge(did_s[["band", "did_pp", "did_lo_pp", "did_hi_pp"]], on="band", how="left")
-# Introductory price acts on the newest band, so it carries the 0-2 month churn change.
-first = did_s.set_index("band").loc["0-2 months"]
-for c in ["did_pp", "did_lo_pp", "did_hi_pp"]:
-    rule.loc[rule.form.str.startswith("introductory price"), c] = first[c]
-# Apr-Jul scenarios carry the Apr-Jul churn change.
-apr = rob_apr.set_index("band")
-is_apr = rule.form.str.endswith("after window Apr-Jul")
-for c in ["did_pp", "did_lo_pp", "did_hi_pp"]:
-    rule.loc[is_apr & rule.band.isin(apr.index), c] = rule.loc[is_apr, "band"].map(apr[c])
-    rule.loc[is_apr & rule.form.str.startswith("introductory price"), c] = apr.loc["0-2 months", c]
-for c in ["did_pp", "did_lo_pp", "did_hi_pp"]:
-    rule.loc[rule.band.str.startswith("0-2 months,"), c] = rule.loc[rule.band.str.startswith("0-2 months,"), "form"].map(
-        lambda f: (apr if f.endswith("Apr-Jul") else did_s.set_index("band")).loc["0-2 months", c])
-rule["churn_clearly_up"] = rule.did_lo_pp > 0
-rule["rollback_pays"] = rule.rollback_gain_lo > 0
-rule["rollback_recommended"] = rule.churn_clearly_up & rule.rollback_pays
-rule["rollback_pays_if_keep_calibrated"] = rule.rollback_gain_calibrated_lo > 0
-# A yes that holds only at 12 months, not at 6, rests on the projection: tentative.
-six = rule[rule.horizon_months == 6].set_index(["form", "band"]).rollback_recommended
-rule["tentative_projection_only"] = [
-    bool(r.rollback_recommended and r.horizon_months == 12 and not six.get((r.form, r.band), False))
-    for r in rule.itertuples()]
-rule = rule[["form", "horizon_months", "band", "subscribers", "did_pp", "did_lo_pp", "did_hi_pp",
-             "rollback_gain", "rollback_gain_lo", "rollback_gain_hi", "rollback_gain_calibrated",
-             "rollback_gain_calibrated_lo", "churn_clearly_up", "rollback_pays", "rollback_recommended",
-             "rollback_pays_if_keep_calibrated", "tentative_projection_only"]]
-rule.to_csv(OUT / "decision_rule_by_tenure.csv", index=False)
-pd.DataFrame(results_log).to_csv(OUT / "checks.csv", index=False)
+# ---------------------------------------------------------------- annual background
+ren_an = renewals("annual", 365)
+an = ren_an[~ren_an.spike_block & ren_an.window.isin(MAIN_WINDOWS)].groupby("window").churned.agg(renewals="size", churns="sum")
+an["churn"] = an.churns / an.renewals
+an.reset_index().to_csv(OUT / "annual_renewals.csv", index=False)
 
 # ---------------------------------------------------------------- charts
-bp = by_plan.pivot(index="month", columns="plan", values="churn_rate").loc["2025-10":"2026-07"] * 100
-charts.save(charts.line(bp.index, {"Monthly plan": bp.monthly, "Annual plan": bp.annual},
-                        "Monthly-plan churn rose after the March 2026 price change; annual stayed flat",
-                        highlight="Monthly plan", ylabel="Monthly churn, % of active (to July 2026)",
-                        source=SOURCE + "; August 2026 left out (end dates recorded differently)"),
-            CH / "churn_by_plan.png")
-dd = did[did.band != "All tenures"]
-up = [str(b) for b in dd.band[dd.did_lo_pp > 0]]
-fig = charts.bar([str(b) for b in dd.band], dd.did_pp,
-                 "Churn rose in every tenure group, least for 12-23 months",
-                 highlight=up, ylabel="Change in monthly churn vs annual plan, pp (95% interval)", source=SOURCE)
-ax = fig.axes[0]
-for txt in list(ax.texts):
-    txt.remove()
-ax.errorbar(range(len(dd)), dd.did_pp, yerr=[dd.did_pp - dd.did_lo_pp, dd.did_hi_pp - dd.did_pp],
-            fmt="none", ecolor=charts.TEXT, capsize=4, linewidth=1)
-for i, v in enumerate(dd.did_pp):
-    ax.annotate(f"{v:.1f}", (i, dd.did_hi_pp.iloc[i]), xytext=(0, 4), textcoords="offset points",
-                ha="center", color=charts.TEXT)
-charts.save(fig, CH / "did_by_tenure.png")
-for old in CH.glob("rollback_gain_by_tenure_*m.png"):
-    old.unlink()
-for hz in (6, 12):
-    mm = rule[(rule.form.isin(["base on 2026-09-24", "introductory price, new starters"]))
-              & (rule.horizon_months == hz) & (rule.band != "All tenures")]
-    order = {b: i for i, b in enumerate(BAND_ORDER + ["Intro price, non-trial starters",
-                                                      "Intro price, trial converts (rate unmeasured)"])}
-    mm = mm[mm.band.isin(order)].sort_values("band", key=lambda s: s.map(order))
-    names = [f"Cut to $10, {b}" if b in BAND_ORDER else
-             ("Intro $10, non-trial starters" if "non-trial" in b else "Intro $10, trial converts*")
-             for b in mm.band]
-    pays_ = [n for n, lo in zip(names, mm.rollback_gain_lo) if lo > 0]
-    title = (f"Over {hz} months every rollback option loses revenue" if not pays_ else
-             f"Projected over {hz} months, only the newest customers and an intro price gain (tentative)")
-    fig = charts.bar(names, mm.rollback_gain.round(0), title, highlight=pays_, horizontal=True,
-                     source=SOURCE + f"; {hz}-month revenue, rollback minus keep, $; blue = interval above zero; *churn rate unmeasured")
-    lo_, hi_ = fig.axes[0].get_xlim()
-    fig.axes[0].set_xlim(lo_ * 1.25, hi_ * 1.15)
-    charts.save(fig, CH / f"rollback_gain_{hz}m.png")
+mar = series.set_index("due_month").churn_main
+fig = charts.line(
+    series.due_month, {"Monthly churn per renewal (%)": series.churn_main * 100},
+    f"Churn held at {mar['2026-03']:.1%} at the first $12 renewal in March 2026, "
+    f"then rose to {mar['2026-05':'2026-07'].mean():.1%} by May to July",
+    highlight="Monthly churn per renewal (%)", ylabel="% of renewals not paid",
+    source=SRC + " (excl. 2025-09-17 block)")
+fig.axes[0].axvline(series.due_month.tolist().index("2026-03"), color="#333333", ls=":", lw=1)
+fig.axes[0].tick_params(axis="x", labelrotation=45)
+fig.axes[0].annotate("first $12 renewals", xy=(series.due_month.tolist().index("2026-03"), 0.95),
+                     xycoords=("data", "axes fraction"), xytext=(-4, 0),
+                     textcoords="offset points", ha="right", fontsize=9, color="#333333")
+fig.subplots_adjust(bottom=0.25)
+charts.save(fig, CH / "churn_by_due_month.png")
 
-# ---------------------------------------------------------------- headline print (aggregates only)
+sb = segments[(segments.baseline == "before") & (segments.compared == "after")]
+ss = segments[(segments.baseline == "before_clean") & (segments.compared == "after_steady")]
+overall = headline.iloc[0].diff_pp
+for dim, title_dim in [("country", "country"), ("device_type", "device"), ("tenure", "tenure (months)")]:
+    d = ss[ss.dimension == dim]
+    # "clearly" above or below: the 95% range excludes the overall rise
+    above = d[d.diff_low_pp > overall].segment.tolist()
+    below = d[d.diff_high_pp < overall].segment.tolist()
+    parts_t = ([f"{', '.join(above)} clearly above"] if above else []) + \
+              ([f"{', '.join(below)} clearly below"] if below else [])
+    where = "; ".join(parts_t) if parts_t else "no group clearly differs from"
+    fig = charts.bar(d.segment, d.diff_pp * 10,
+                     f"Extra churn by {title_dim}: {where} the overall rise of {overall * 10:.0f} per 1,000",
+                     highlight=above,
+                     ylabel="extra churns per 1,000 renewals, tenure-matched",
+                     source=SRC + "; Nov 2025-Feb 2026 vs May-Jul 2026; bars show 95% range")
+    ax = fig.axes[0]
+    ax.errorbar(range(len(d)), d.diff_pp * 10,
+                yerr=[(d.diff_pp - d.diff_low_pp) * 10, (d.diff_high_pp - d.diff_pp) * 10],
+                fmt="none", ecolor="#333333", capsize=4, lw=1)
+    ax.axhline(overall * 10, color="#333333", ls=":", lw=1)
+    ax.annotate("overall", xy=(1, overall * 10), xycoords=("axes fraction", "data"),
+                xytext=(4, 0), textcoords="offset points", va="center", fontsize=9,
+                color="#333333")
+    charts.save(fig, CH / f"churn_rise_by_{dim}.png")
+
+bd = by_due[by_due.dimension.isin(["all", "tenure"])]
+months = sorted(bd.due_month.unique())
+def gain_line(bands):
+    sel = bd[(bd.dimension == "tenure") & bd.segment.isin(bands)]
+    return sel.groupby("due_month").gain_usd.sum().reindex(months) / 1000
+
+
+lines = {"All subscribers": bd[bd.dimension == "all"].set_index("due_month").gain_usd
+         .reindex(months) / 1000,
+         "Months 1-6": gain_line(["1", "2-3", "4-6"]),
+         "Months 7-12": gain_line(["7-12"]),
+         "Months 13+": gain_line(["13-24", "25+"])}
+pd.DataFrame(lines).mul(1000).rename_axis("due_month").reset_index() \
+    .to_csv(OUT / "observed_gain_by_due_month_grouped.csv", index=False)
+first, last = lines["All subscribers"].iloc[0], lines["All subscribers"].iloc[-1]
+fig = charts.line(months, lines,
+                  f"Monthly gain from the increase fell from \\${first:.1f}k to \\${last:.1f}k; "
+                  f"subscribers in months 1-6 were below zero by July",
+                  highlight=["All subscribers", "Months 1-6"],
+                  ylabel="\\$ thousands vs \\$10 at Nov-Feb churn",
+                  source=SRC + "; base charged in the 30 days to 2026-02-28")
+fig.axes[0].axhline(0, color="#333333", lw=0.8)
+charts.save(fig, CH / "observed_gain_by_due_month.png")
+
+# ---------------------------------------------------------------- rollback reach (sizing only)
+# Who a first-year rollback would reach at the window end (2026-07-31), from payments only:
+# monthly subscribers charged in the 30 days to that date. Trial users are already excluded
+# and nothing after 2026-07-31 is read (user's request), so trial converters, which only
+# exist from 2026-08-15, cannot be counted here.
+live = mp[(mp.payment_date > WINDOW_END - pd.Timedelta(days=30))
+          & (mp.payment_date <= WINDOW_END)].copy()
+assert live.subscription_id.is_unique
+live["group"] = np.where(live.spike_block, "bulk 2025-09-17 (not measured)",
+                np.where(live.start_date.dt.normalize() == pd.Timestamp("2026-07-30"),
+                         "bulk 2026-07-30 (not measured)", "organic, no trial (measured)"))
+live["first_year"] = (live.payment_date + pd.Timedelta(days=30) - live.start_date).dt.days < 365
+reach = live.groupby(["group", "first_year"]).size().unstack(fill_value=0) \
+    .rename(columns={True: "first_year", False: "past_first_year"})
+reach.reset_index().to_csv(OUT / "rollback_reach_2026_07_31.csv", index=False)
+say(checks.parts_sum_to_total(reach[["first_year", "past_first_year"]].sum(axis=1), len(live)))
+
+# ---------------------------------------------------------------- print aggregates
 pd.set_option("display.width", 200)
-print("\nMonthly churn, before (Oct 2025-Feb 2026) vs after (Mar-Jul 2026), pp = percentage points:")
-print(rates[rates.band == "All tenures"][["plan", "rate_before", "rate_after", "change_pp", "change_rel"]].round(4).to_string(index=False))
-print("\nAfter window vs August 2026 on its own (monthly, all tenures):")
-print(aug[(aug.plan == "monthly") & (aug.band == "All tenures")][["period", "at_risk", "churned", "churn_rate"]].round(4).to_string(index=False))
-print("\nAfter window by start cohort (monthly):")
-print(coh.round(4).to_string(index=False))
-print("\nMonthly plan by tenure, change minus annual change (DiD, pp, 95% interval):")
-print(did[["band", "rate_before", "rate_after", "change_pp", "change_rel", "did_pp", "did_lo_pp", "did_hi_pp"]].round(4).to_string(index=False))
-print("\nStopped paying next month (payments), monthly plan:")
-print(pay_cmp[pay_cmp.band == "All tenures"][["period", "payers", "stop_rate"]].round(4).to_string(index=False))
-print(pay_cmp.pivot(index="band", columns="period", values="stop_rate").round(4).to_string())
-print("\nSame months a year earlier (DiD, pp; before the end-date recording change, context only):")
-print(did_year[["band", "rate_before", "rate_after", "change_pp", "did_pp"]].round(4).to_string(index=False))
-print("\nRobustness (DiD pp):")
-print(robust.pivot(index="band", columns="variant", values="did_pp").round(3).to_string())
-print("\nAfter window Apr-Jul 2026 (DiD pp):")
-print(robust_apr.round(3).to_string(index=False))
-print("\nMonthly churn, joined at $10, by month:")
-print(held.round(4).to_string(index=False))
-print(f"\nNew monthly starters a month: {NEW_NONTRIAL:.0f} non-trial and {NEW_TRIAL:.0f} trial converts in Aug 2026; "
-      f"non-trial average Mar-Jul {NEW_NONTRIAL_MARJUL:.0f}.")
-print("\nModel vs paid months (1 March base):")
-print(model_ok.round(3).to_string(index=False))
-print("\nIntro price, non-trial starters, by monthly volume (main scenario):")
-print(intro_range[intro_range.form == "introductory price, new starters"].round(0).to_string(index=False))
-print("\nMoney and decision rule (rollback gain = rollback revenue minus keep revenue, $):")
-print(rule.drop(columns=["did_lo_pp", "did_hi_pp", "did_pp", "rollback_gain_hi"]).round(0).to_string(index=False))
+h = headline.iloc[0]
+print(f"\nHEADLINE: churn per renewal {h.churn_cmp:.2%} after vs {h.churn_base_tenure_matched:.2%} "
+      f"before (tenure-matched): {h.diff_pp:+.2f} pp [{h.diff_low_pp:+.2f}, {h.diff_high_pp:+.2f}], "
+      f"{h.rel_change:+.0%} relative; renewals {h.renewals_base:,} before, {h.renewals_cmp:,} after")
+print(headline[["sample", "baseline", "compared", "churn_base_tenure_matched", "churn_cmp",
+                "diff_pp", "diff_low_pp", "diff_high_pp", "rel_change"]].round(4).to_string())
+print("\nSEGMENTS vs before:")
+print(sb[["dimension", "segment", "renewals_cmp", "churn_base_tenure_matched", "churn_cmp",
+          "diff_pp", "diff_low_pp", "diff_high_pp", "rel_change"]].round(4).to_string())
+print("\nSEGMENTS steady after vs clean before:")
+print(ss[["dimension", "segment", "renewals_cmp", "churn_base_tenure_matched", "churn_cmp",
+          "diff_pp", "diff_low_pp", "diff_high_pp", "rel_change"]].round(4).to_string())
+print("\nSEGMENTS vs year earlier:")
+print(segments[segments.baseline == "year_earlier"][["dimension", "segment", "churn_base_tenure_matched",
+      "churn_cmp", "diff_pp", "diff_low_pp", "diff_high_pp"]].round(4).to_string())
+print("\nMONEY (12 months from 2026-07-31):")
+print(money.round(3).to_string())
+print("\nOBSERVED Mar-Jul 2026 revenue, existing base:")
+print(observed.round(1).to_string())
+print(by_due[by_due.dimension.isin(["all", "tenure"])].pivot_table(
+    index=["dimension", "segment"], columns="due_month", values="gain_usd").round(0).to_string())
+print("\nROLLBACK REACH on 2026-07-31 (monthly, sizing only):")
+print(reach.to_string())
+print("\nNEW PAID STARTS by window:")
+print(sw.round(3).T.to_string())
+print("\nANNUAL renewals:")
+print(an.round(3).to_string())
+print("\nBy tenure x window:")
+print(by_ten.round(4).to_string())

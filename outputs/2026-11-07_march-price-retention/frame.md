@@ -2,50 +2,54 @@
 
 ## Question
 Raw: "Did the March 2026 price increase hurt retention, and for whom? The head of growth is deciding whether to roll back part of the increase for some customers."
-Framed: Did monthly-plan retention get worse after the March 2026 price change ($10 to $12), by how much, for which plan and tenure groups, and is a partial rollback for any of those groups worth the revenue it gives up?
+Framed: Did the March 2026 monthly price increase ($10 to $12) lower retention among paying subscribers, and in which groups enough to justify rolling back part of the increase?
 
 ## Decision it informs
-Whether to roll back part of the March 2026 price increase for some customers, and for which ones.
+Whether to roll back part of the March 2026 price increase for some customer groups.
 
 ## Audience
 Head of growth.
 
 ## Population
-Paid subscribers (free plans excluded: they never end). The business can treat customers differently by plan and by tenure (user's answer); no other groups are targetable.
-- Analyst suggestion: tenure measured at each subscriber's first $12 charge (existing subscribers only feel the increase at their next billing date; new and established customers may react differently).
-- Analyst suggestion: start cohort, pre-increase vs post-increase starters (compares customers only with others at the same stage).
-- Analyst suggestion: annual plan as the comparison group, read as difference-in-differences: each group against its own baseline, since annual customers can only leave at renewal and their raw churn does not behave like monthly churn.
+Paying monthly subscribers; annual subscribers only as a background check if their price did not change. Excluded: free plans, every user with a trial record, and subscriptions starting after the analysis window.
+- Analyst suggestion: treatment is set per subscriber by their first $12 charge in payments (existing and new subscribers), not by calendar date alone; any monthly subscriber still paying $10 after March is a same-period comparison group (who was actually treated decides the comparison).
+- Analyst suggestion: country (US, EU, India, Rest) (regional pricing is a usual lever and price sensitivity can differ by country).
+- Analyst suggestion: device / store (Web, Android, iOS) (prices can be set per store).
+- Analyst suggestion: tenure, time since start (grandfathering long-time subscribers is a lever; customers are compared only at the same tenure).
+- Analyst suggestion: start cohort (like-for-like control, not a lever).
+- Not treated differently: individual customers.
 
 ## What would change the decision
-The user gave no threshold; the analyst proposes one.
-- Analyst suggestion: consider a rollback for a group only if (a) its churn rose clearly more than its own pre-increase baseline after allowing for the comparison group's change over the same months, at the same tenure, and (b) the revenue lost to that extra churn exceeds the extra $2 a month collected from those who stayed, over the 6 months after the change.
-- Analyst suggestion: the money at stake for each whole group over that period, next to the rates. A rate says which way; money for the whole group says whether acting is worth it.
-- Analyst suggestion: count reactions other than cancelling (monthly to annual, downgrade to free, fewer trials converting to monthly) in both the retention and the money. Not measurable in this data; see Out of scope.
-The analysis plan should make this measurable and show it to the user first.
+- Analyst suggestion: roll back for a group if its monthly churn after the increase, against the same tenure before it, rose enough to cancel the 20% price gain (expected subscriber lifetime down by more than about 17%); keep the increase where the rise is small or absent.
+- Analyst suggestion: money at stake per group over 12 months: revenue at $12 with observed post-increase churn against $10 with pre-increase churn, for the whole affected group.
+- Analyst suggestion: second outcome, the new paid start mix (monthly vs annual) and new monthly starts per month before vs after, to catch damage before churn.
+- The analysis plan should make the threshold measurable and show it to the user first.
 
 ## Tables likely involved
-- subscriptions: plan, start and end dates; churn, tenure, plan switches.
-- payments: price actually charged, date of first $12 charge, revenue.
-- users: signup date and customer attributes for tenure and cohort.
-- trials: whether trial conversion to monthly changed after the increase (trials only start 2026-08-01, so likely limited).
+- subscriptions: plan, start and end dates for churn and tenure.
+- payments: who paid $10 or $12 and when, to set treatment and revenue.
+- users: country and device for the groups.
+- trials: only to identify trial users and confirm the trial launch date, so they can be excluded.
 
 ## Analysis window
-Before: 2025-09-01 to 2026-02-28. After: 2026-03-01 to 2026-09-24 (data end). Analyst suggestion: seasonality check on the same months a year earlier, if the data goes back that far.
+- Before: 2025-09-01 to 2026-02-28.
+- After: 2026-03-01 to 2026-07-31 (ends the day before trials launched on 2026-08-01; nothing from August or September 2026 is used).
+- Analyst suggestion: seasonality check, 2025-03-01 to 2025-07-31 against 2026-03-01 to 2026-07-31, if end dates are recorded the same way in both years.
+- Churn measured per subscriber-month of exposure; recent starts compared only at tenures reached by 2026-07-31.
 
 ## Additional context
-- Only the monthly price changed ($10 to $12); annual did not.
-- September 2025 signup spike (about 5x a normal month) sits in the baseline.
-- Subscription end dates changed how they are recorded in October 2025; check stability before choosing a baseline.
-- Recent months are open: future end dates are scheduled cancellations and still active.
-- User expects no particular result (none given).
+- The user asked that the trial period not be included anywhere, since trials could change how people sign up and use the service.
+- September 2025 signup spike (quirk) falls in the before window; flag it whenever it enters a comparison.
 
 ## Out of scope
-- Groups other than plan and tenure: the business cannot target them.
-- Free users as a retention group.
-- Acquisition (new signups) except where it changes the revenue math.
-- Plan switches (monthly to annual, paid to free): the data holds one subscription per user and shows no trace of switches, so they cannot be measured. The user chose to carry this as a caveat only (2026-11-07); a switcher recorded as a cancellation would count as churn.
+- Everything from 2026-08-01 onward and all trial users (user's request; trial launch could change signup and usage).
+- Trial conversion (no trials before the increase).
+- Free plans (never end).
+- Plan switches by existing subscribers, unless profiling shows they are visible.
+- Annual subscribers as a primary control (renew once a year, too little churn to compare).
 
 ## Open questions
-- Exact date the new price took effect, and whether existing subscribers moved to $12 at their next billing date.
-- Whether the baseline survives the October 2025 end-date recording change.
-- How far back the data goes for the seasonality check.
+- Did existing monthly subscribers move to $12 in March, or only new ones?
+- Did the annual price change?
+- Is the subscription end date recorded the same way across the before, after and year-earlier periods?
+- Are plan switches visible at all?

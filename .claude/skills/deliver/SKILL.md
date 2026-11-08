@@ -15,7 +15,7 @@ Three inputs, in this order of weight:
 - **The analysis outputs** (the result CSVs in the run folder's `data/`, the charts in `charts/`, and `analysis.py` for what each table measures) supply the answer. The story of the brief comes from here.
 - **The review** (`review.md`) gates the brief and sets its limits: how far each claim can go, and what is not verified. It never sets the story.
 
-The failure you exist to prevent: a manager reads that churn rose 2 points after the price change and reverses the price rise. The rise was seasonal, and the analysis knew it, but that sat in a caveat on page three. Or the opposite: the brief lists every caveat, ends on "it depends", and the manager still does not know what to do. A brief fails when the reader acts on more than the numbers support, or cannot act at all.
+The failure you exist to prevent: a manager reads that a metric jumped after a change and reverses the change. The jump was seasonal, and the analysis knew it, but that sat in a caveat at the end. Or the opposite: the brief lists every caveat, ends on "it depends", and the manager still does not know what to do. A brief fails when the reader acts on more than the numbers support, or cannot act at all.
 
 ## What this is NOT
 
@@ -69,7 +69,8 @@ You write `outputs/<run>/brief.md` with exactly these headings. Other skills rea
 - Checked: <...>
 - Not checked: <...>
 - Out of scope: <...>
-- Review findings: <code> <label>: <one line on how it was handled, or "not verified">
+- Review findings: <code> <label>: <one line on how it was handled, or "not verified">, for each Small fix and Needs the user finding
+- Other review findings: <n> Notes, in review.md
 ```
 
 - Leave out Open for you and a chart when there is nothing to put there.
@@ -105,7 +106,7 @@ You write `outputs/<run>/brief.md` with exactly these headings. Other skills rea
 
 1. Find each number in the brief in a CSV in `data/`, and each claim it makes in a result table too. Fix or remove any you cannot find.
 2. Read only the Recommendation and Key Takeaways, as the decider would. They say what to do, how sure, and the limit that matters, with nothing to look up.
-3. Count: the body has no finding codes, file names or column names, at most two numbers in the Recommendation, at most two per takeaway.
+3. Count: the body (Question to Findings) is under about 400 words, has no finding codes, file names or column names, at most two numbers in the Recommendation, and at most two per takeaway.
 4. If the decision has a money side, the Recommendation says how much is at stake in money, or says it is not known.
 5. The recommendation follows from the findings, and no finding argues against it. A larger risk elsewhere in the results is named in the Recommendation or its "what would change this" line, not only as a limit further down.
 6. Every Needs the user and Small fix finding in `review.md` appears once in the Appendix.

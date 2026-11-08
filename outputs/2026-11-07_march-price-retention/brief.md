@@ -1,63 +1,57 @@
-# Brief: Keep the $12 monthly price, test an intro offer
+# Brief: March 2026 price increase and retention
 
 ## Question
-Should we roll back part of the March 2026 monthly price rise ($10 to $12) for some customers, and if so for whom?
+Should we roll back part of the March 2026 monthly price increase ($10 to $12), and for which customers?
 
 ## Recommendation
-**Keep $12 for every monthly customer for now; do not roll back for any group.**
-Monthly customers did leave more often after the rise, but the extra $2 from those who stay outweighs what the leavers cost: cutting back to $10 for all monthly customers would give up about $38,000 over the next six months, and no single tenure group clearly comes out ahead over that period.
-Fairly confident: the six-month answer holds under every variant tested, though the data cannot fully separate the price rise from the time of year.
-What would change this: if newer customers keep leaving at the post-rise rate for a full year, a $10 introductory price for new monthly starters would likely pay over twelve months; find out with a holdout test (offer $10 for the first three months to a random half of new monthly starters for one quarter, and compare revenue per starter at twelve months).
+**Move first-year monthly subscribers back to $10 as a two-month test on a random half of them, and keep $12 for everyone past their first year.**
+Since May, cancellations outweigh the higher price: across 4,599 measured monthly subscribers, $12 projects about $7,000 less than $10 over 12 months, and the losses sit in the first year.
+Tentative: that figure is not verified for season (winter against summer) and assumes $10 restores the old churn; only subscribers who joined without a trial were measured.
+What would change this: if the half back at $10 cancels as often as the half at $12, price is not the cause and $12 should stay. Season cannot be checked against last year: something unexplained changed in September or October 2025 (the same weeks as a bulk sign-up of 1,385 subscriptions), so the test is the only clean check; whoever owns billing may know what changed.
 
 **Open for you**
-- Are you willing to run a price test that may cost a little in its first six months for a likely but unproven gain by month twelve, given the billing work and possible fairness complaints a two-price setup brings?
-- Did anything else change for monthly customers in spring 2026 (product, billing, marketing) that could explain part of the rise in cancellations from April?
+- Did anything else change for subscribers between March and July 2026?
 
 ## Key Takeaways
-- Monthly churn (the share of monthly subscribers who cancel in a month) rose from 2.4% before the rise to 5.0% after, while annual-plan churn, which the rise did not touch, stayed flat.
-- Over six months, every way of rolling back brings in less than keeping $12; the biggest loss would come from customers at 12-23 months, about $18,000.
-- Only the newest customers might be worth a lower price, and only on a twelve-month projection: an intro price for new starters gains about $3,000 to $8,000 a year at recent sign-up volumes, so it is worth a test, not a rollout.
+- Churn (the share of monthly renewals not paid) rose from 1.3% before the increase to 5.1% by May to July, past the point where $12 stops paying off.
+- The rise is in the first year of a subscription: churn rose 7.9 points at four to six months, against 0.8 points at 13 to 24 months.
+- The extra monthly cash from the increase fell from about $9,000 in March to $3,000 in July; subscribers in their first six months were below zero by July.
 
 ## Findings
-### Churn rose after the price rise for every tenure group, least for customers at 12-23 months
-![Rise in monthly churn after the price change, by how long customers had subscribed, measured against the annual plan, with 95% intervals](charts/did_by_tenure.png)
-- Against the annual plan as a yardstick, monthly churn rose by an extra **2.7 percentage points** a month overall; customers in their first year rose most, by up to 4.6 points, so the rise is broad and churn alone does not single out a group to protect.
-- For customers at 12-23 months the two ways of counting leavers disagree (cancellations up 0.6 points, but the share who stop paying fell), so their rise is not clear.
-- Limits: before and after cover different seasons, and the same months a year earlier showed no rise, but that check sits before a change in how cancellations are recorded, so season is not fully ruled out. Customers who switched to annual or free cannot be seen and count as leavers, which overstates churn.
+### Churn almost quadrupled once $12 renewals arrived, and stayed there
+![Monthly churn per renewal, March 2025 to July 2026](charts/churn_by_due_month.png)
+- Break-even (the churn at which $12 earns what $10 did) is 4.8%; the projected 12-month result ranges from a $17,000 loss to a $4,000 gain.
+- New monthly sign-ups held: about 195 a month, against 198 before.
+- Limit: season is unchecked.
 
-### No rollback clearly pays within six months
-![Six-month revenue from cutting to $10 minus revenue from keeping $12, by tenure group and for an intro price](charts/rollback_gain_6m.png)
-- Cutting back to $10 for all monthly customers gives up about **$38,000** over six months against keeping $12; customers who have stayed a year or more carry most of that loss.
-- After correcting for the model slightly overcounting months paid at $12, a cut for the newest customers and an intro price for new starters come out close to break-even (less than $1,000 either way), still with no clear gain.
+### The damage is in the first year of a subscription
+![Extra churn by months subscribed, with 95% ranges](charts/churn_rise_by_tenure.png)
+- Every band under 12 months loses at $12; 13 to 24 months gains about $22,000. Months seven to twelve, and groups outside the US and iOS, are tentative.
+- A first-year rollback reaches 1,547 measured subscribers plus 560 and 302 from two bulk sign-up days never measured; trial converters since August are not measured.
 
-### Over twelve months, only a lower price for the newest customers might pay (tentative)
-![Twelve-month projected revenue from cutting to $10 minus revenue from keeping $12, by tenure group and for an intro price](charts/rollback_gain_12m.png)
-- A $10 intro price for the first three months for new monthly starters who did not come through a free trial gains about **$3,000** a year at August's pace of new starters, rising to about $8,000 at September's pace; a cut for current customers in their first three months who did not come through a trial projects about $4,000.
-- Limits: this is a projection past the data, built on about four months of post-rise churn, and churn among customers who joined at $10 eased in July (from 5.4% in June to 4.3%). The churn rate used for new starters was measured before free trials launched in August, which changed who signs up without a trial. Trial converts have no churn history yet, so their projected gain is not counted here.
+### The gain from the increase is shrinking every month
+![Monthly gain from the increase by months subscribed](charts/observed_gain_by_due_month.png)
+- March to July still brought about $30,000 more than $10 would have; July alone $3,000 (range $2,000 to $3,000).
+- Firmest for months one to six; five observed months, against a twelve-month projection.
 
 ## Appendix
 ### How this was done
-- Data: Beam subscriptions, payments and trials exports, read as of 2026-09-24 (the end of the data). Free plans are left out because they never end; scheduled cancellations after 2026-09-24 count as still active.
-- Population: paid monthly subscribers, split by tenure (months since start: 0-2, 3-5, 6-11, 12-23, 24+), with annual subscribers as the comparison group.
-- Windows: before is October 2025 to February 2026 (starts after the October 2025 change in how end dates are recorded); after is March to July 2026, with April to July as a check. August and September 2026 are left out of compared windows because end dates in those months are recorded differently and September is incomplete.
-- Measure and comparison: monthly churn per tenure group, after against before, minus the annual plan's change at the same tenure (difference in differences), with 95% intervals. A second measure, the share of payers who do not pay again the next month, is used as a cross-check that does not rely on end dates.
-- Money: for the 5,560 monthly paying subscribers on 2026-09-24, projected revenue at $10 (pre-rise churn plus the annual plan's change) against $12 (post-rise churn), over six and twelve months, with bootstrap intervals. An intro price (first three months at $10, then $12) is sized for new starters at August 2026 volume and scaled to each complete month's volume from March to August. The frame's rule: roll back only where churn clearly rose and the six-month revenue gain is above zero.
+- Data: Beam payments, subscriptions and users. Population: paying monthly subscribers, excluding every user with a trial record (user's request), the 2025-09-17 and 2026-07-30 bulk sign-up blocks, and anything after 2026-07-31. Trial converters (from 2026-08-15) are not measured and not counted anywhere.
+- Churn per renewal: a monthly charge with no charge 30 days later. Main comparison: renewals due November 2025 to February 2026 (before) against May to July 2026 (after, once churn settled), before reweighted to the same months-subscribed mix, with 95% ranges.
+- Projected money: 12 months from 2026-07-31 for the 4,599 measured active subscribers (3,052 past and 1,547 in their first year), $12 at after-churn against $10 at before-churn. Break-even: the churn at which 12 months at $12 earn the same as at $10 with before-churn.
+- Observed money: what the 4,572 subscribers charged 2026-01-30 to 2026-02-28 paid on renewals due March to July, against $10 at their group's before-churn, by month, with 95% ranges from the before-churn only. This base and the projected base are different people at different dates.
+- New sign-ups: paid starts per month, after against November 2025 to February 2026, bulk days removed, Poisson 95% range on the ratio (change -1%, range -10% to +8%).
 
 ### Sources
-- Churn rose after the price rise for every tenure group, least for customers at 12-23 months: data/did_monthly_vs_annual_by_tenure.csv, data/churn_before_after_by_plan_tenure.csv, data/churn_monthly_by_plan.csv, data/payment_stop_rate_by_period.csv, data/seasonality_year_earlier_did.csv, data/robustness_did.csv, data/did_after_window_apr_jul.csv; analysis.py (monthly churn panel and difference in differences, lines 96-174; payments-based retention, lines 176-209; seasonality and robustness, lines 211-225).
-- No rollback clearly pays within six months: data/money_rollback_by_tenure.csv, data/decision_rule_by_tenure.csv, data/money_model_vs_paid_by_tenure.csv; analysis.py (money, lines 227-413; decision rule, lines 457-491).
-- Over twelve months, only a lower price for the newest customers might pay: data/decision_rule_by_tenure.csv, data/intro_price_by_starter_volume.csv, data/churn_by_month_joined_at_10.csv; analysis.py (intro range, lines 415-440; churn of $10 joiners, lines 450-455; decision rule, lines 457-491).
-- Charts: analysis.py (charts, lines 494-533).
+- Churn almost quadrupled: data/headline_churn.csv (main, before_clean vs after_steady), data/churn_by_due_month.csv, data/money_by_segment.csv (all, breakeven_churn_at_12, gain bounds), data/new_paid_starts_by_window.csv; analysis.py (headline, lines 131-162; money, 196-259; new starts, 340-377; chart, 386-399).
+- The damage is in the first year: data/churn_by_segment.csv (tenure, before_clean vs after_steady), data/money_by_segment.csv (tenure, country, device_type), data/rollback_reach_2026_07_31.csv; analysis.py (segments, lines 164-177; money, 196-259; reach, 451-466; chart, 401-425).
+- The gain is shrinking: data/observed_revenue_by_due_month.csv, data/observed_revenue_mar_jul.csv, data/observed_gain_by_due_month_grouped.csv; analysis.py (observed revenue, lines 261-331; grouped table and chart, 427-449).
+- Recommendation money ($7,000, 4,599 subscribers): data/money_by_segment.csv (all, before_clean vs after_steady).
 
 ### Checks
-- Checked: rerun of analysis.py matches all 18 result files; the payments join keeps 100,914 of 100,914 rows without duplicates; tenure groups sum to the 136,057 at-risk months; money by group sums to the totals in every variant; the six-month answer (no group clearly pays) holds with April to July as the after window, without September 2025 starters in the baseline, and with the keep side corrected to months actually paid.
-- Not checked: the twelve-month projection beyond the data (about four months of post-rise churn, easing in July); trial converts' churn beyond their first month (trials began 2026-08-01); why non-trial and annual starts jumped in July 2026; the cost of running a targeted price (billing work, fairness complaints), which is not in the data, so the test's net value is not sized; uncertainty in the keep-side correction itself (its interval is shifted, not redrawn, and the intro volume range has no corrected interval); the model's months paid for 6-11 month customers are 5.5% off actual payments.
-- Out of scope: plan switches (monthly to annual, paid to free) cannot be seen in the data and count as churn; groups other than plan and tenure, which the business cannot target; free users; new-signup volume except in the intro price sizing.
-- Review findings: C1 Note (six-month chart title says every option "loses revenue"): handled by saying "no rollback clearly pays within six months" and noting the near break-even rows after correction.
-- Review findings: A1 Note (trial-convert rows marked as passing at twelve months with an unmeasured rate): handled; the twelve-month case rests on non-trial starters and current non-trial customers only, trial converts are named as unmeasured and not counted.
-- Review findings: A2 Small fix (intro volume range uses pre-trial-launch months and a churn rate measured on that group): handled by basing the forward range on August and September volume ($3,000 to $8,000 a year) and stating that the new-starter churn rate comes from pre-launch starters; the March to July volumes (up to 491 a month) are not used in the body.
-- Review findings: A3 Note (no group passes the six-month rule; twelve-month passes are tentative; $10 joiner churn eased in July): handled by leading with the six-month answer and presenting the newest-customer options as a tentative projection worth a test.
-- Review findings: A4 Note (form of a tenure rollback not set by the frame): both forms, a cut for current customers and an intro price for new starters, are sized side by side in the Findings.
-- Review findings: A5 Note (12-23 month churn measures disagree): stated in the first finding; the 12-23 month rise is not called clear.
-- Review findings: A6 Note (season not ruled out): stated as a limit in the first finding and in the Recommendation's confidence line.
-- Review findings: A7 Note (plan switches count as churn): stated as a limit in the first finding and under Out of scope.
+- Checked: a rerun from an unedited copy matches all 14 result files; all 17 built-in checks pass or report the known end-date recording break the script measures around; segment counts add to 4,599 in every dimension; the measured base equals the measured rows of the reach table; nothing due after 2026-07-31 is used.
+- Not checked: whether returning to $10 restores before-churn (no group stayed at $10; every money figure assumes it); plan switches (not visible in the data).
+- Not verified (analysis gaps, lowering confidence): season in the main comparison (winter against summer, four months against three); no result table holds the projected money for the first-year group as a whole, only per band, so the recommendation quotes the whole measured base; the grouped monthly gain table carries no range; the one-month band rests on 185 subscribers; country by device cells are thin; churn rose in April and May, a month or two after the first $12 charge.
+- Out of scope: everything from 2026-08-01, all trial users and trial converters, free plans, annual subscribers as a main control (annual churn 4.8% after against 4.6% before, background only).
+- Review findings: A1 Needs the user (Sep/Oct 2025 churn change, year-earlier baseline unusable): not verified; no year-earlier figure is quoted, season is stated as unchecked, confidence is tentative; the user does not know what changed (2026-11-08), so it stays unexplained and the test is named as the season check.
+- Other review findings: 3 Notes (A2, A3, A4), in review.md.

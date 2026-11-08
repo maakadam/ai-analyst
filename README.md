@@ -68,6 +68,10 @@ Try it with the course question:
 /analyst Did the March 2026 price increase hurt retention, and for whom? The head of growth is deciding whether to roll back part of the increase for some customers.
 ```
 
+## Design decisions
+
+Why the skills work the way they do is in `DECISIONS.md`.
+
 ## Project Structure
 
 ```

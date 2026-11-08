@@ -22,10 +22,9 @@ Grain (a guess from the data, confirm it): one row per user_id. 31,165 rows.
 
 ## Meaning
 
-- `user_id`: the user's key; every subscription user is here (inferred).
-- `signup_date`: account creation; subscriptions start 0 to 90 days after it (inferred).
-- `country`: US, EU, India, Rest (inferred).
-- `device_type`: Web, Android, iOS (inferred).
+- `user_id`: the user's key; every subscription's user is here, and the join to subscriptions does not fan out (inferred).
+- `signup_date`: account creation; a subscription starts 0 to 90 days after it (median 33) (inferred). All midnight times to 2024, about half in 2025, none in 2026 (quirk "Timestamps everywhere").
+- `country`: US, EU, India, Rest; no nulls (inferred).
+- `device_type`: Web, Android, iOS; no nulls (inferred).
 
-Grain in plain words: one row per user account (inferred).
-
+Grain in plain words: one row per user account; 418 users (open trials) have no subscription yet (inferred).
