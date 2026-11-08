@@ -60,7 +60,13 @@ There is no framework and no Python program controlling the model. The agent is 
 
 ## Status
 
-All six skills are in place, so `/analyst` runs end to end. The course repo shipped Profile, Analyse and the helpers; Frame, Validate and Deliver were written here. Until Profile has been run on each table, `knowledge/beam/` holds only the known quirks and the corrections file; the analyst reads it before touching any data. `TODO.md` lists ideas for later.
+All six skills are in place, so `/analyst` runs end to end. The course repo shipped Profile, Analyse and the helpers; Frame, Validate and Deliver were written here. `knowledge/beam/` holds a note for each of the four main tables (users, subscriptions, payments, trials), the known quirks and the corrections file; the analyst reads it before touching any data. `TODO.md` lists ideas for later.
+
+## The price question
+
+The answer to the course question is in `outputs/2026-11-07_march-price-retention/`: start with `brief.md`, then `review.md`, `analysis.py`, `data/` and `charts/`. Monthly churn rose from 1.3% to 5.1% after the increase, mostly in the first year of a subscription.
+
+An earlier run of the same question, made before the trial period was excluded, is kept on the `archive/march-price-retention-v1` branch for comparison.
 
 Try it with the course question:
 
@@ -77,9 +83,9 @@ Why the skills work the way they do is in `DECISIONS.md`.
 ```
 ai-analyst/
 ├── data/                 # Beam's exported tables (CSV)
-├── knowledge/beam/       # Known data quirks and corrections
+├── knowledge/beam/       # Table notes, known data quirks and corrections
 ├── helpers/              # Shared Python helpers for analysis scripts
-├── outputs/              # One folder per question (not tracked)
+├── outputs/              # One folder per question
 ├── .claude/              # Skills for Claude Code
 └── pyproject.toml        # Dependencies
 ```
