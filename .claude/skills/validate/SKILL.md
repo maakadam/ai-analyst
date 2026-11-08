@@ -13,7 +13,7 @@ The failure you exist to prevent: the script runs, every check passes, the rerun
 
 ## What this is NOT
 
-- Not fixing. You never edit `analysis.py`, `frame.md` or `data/`. You write only `review.md` and `rerun/` (including scratch scripts for Act 6).
+- Not fixing. You never edit `analysis.py`, `frame.md` or `data/`. You write only `review.md` and `rerun/` (including scratch scripts for Act 6). `rerun/` is scratch: write what it showed into `review.md`, then delete the folder before the run is committed.
 - Not new analysis. You do not compute new results for the question. You do query the source data, with aggregates only, to test whether the inputs can be trusted (Act 6). A new result the brief needs is a finding for /analyse.
 - Not the brief. Deliver writes it.
 

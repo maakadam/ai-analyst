@@ -1,5 +1,0 @@
-window,monthly,annual,months,monthly_per_month,annual_per_month,annual_share,annual_share_diff_vs_year_earlier_pp,annual_share_diff_vs_year_earlier_low_pp,annual_share_diff_vs_year_earlier_high_pp,monthly_per_month_rel_vs_year_earlier,monthly_per_month_rel_vs_year_earlier_low,monthly_per_month_rel_vs_year_earlier_high,annual_share_diff_vs_before_clean_pp,annual_share_diff_vs_before_clean_low_pp,annual_share_diff_vs_before_clean_high_pp,monthly_per_month_rel_vs_before_clean,monthly_per_month_rel_vs_before_clean_low,monthly_per_month_rel_vs_before_clean_high
-year_earlier,1007,325,5,201.4,65.0,0.243993993993994,,,,,,,,,,,,
-before,982,307,6,163.66666666666666,51.166666666666664,0.23816912335143522,,,,,,,,,,,,
-after,976,331,5,195.2,66.2,0.25325172149961744,0.9257727505623453,-2.3724964338182866,4.224041934942977,-0.030784508440913738,-0.11246546905495514,0.058413657525947515,0.9698712903628892,-2.539890478133311,4.47963305885909,-0.014141414141414232,-0.1023536122299129,0.08273944456625637
-before_clean,792,255,4,198.0,63.75,0.24355300859598855,,,,,,,,,,,,
