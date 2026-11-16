@@ -28,7 +28,6 @@ outputs/<date>_<slug>/   one folder per question:
 - Before touching data, read `knowledge/beam/index.yaml`, then the YAML of each table in play in full, then `quirks.md` and `corrections.md`.
 - A new fact about one table goes in its YAML: in the field's description if it changes how SQL is written, otherwise in `notes`. Only facts that span tables or are about reading results go in `quirks.md`. One home per fact.
 - When the user corrects you, append one dated line to `corrections.md` and continue.
-- All work reaches `main` through a branch and one PR: one PR per plan step when changing the analyst, one per analysis when answering a question.
-- Never push to `main` directly and never force-push.
+- Work on a branch and bring it into `main` through a PR; never push to `main` directly and never force-push.
 - Before every push, check that no database credentials are in the diff, the commit messages or `.env`/`.mcp.json`.
 - Before changing anything in `.claude/skills/` or `helpers/`, read `DECISIONS.md` and `TODO.md`; when a change sets or drops a rule, add or update one line in `DECISIONS.md`.
