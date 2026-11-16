@@ -1,0 +1,59 @@
+table: marts.user_revenue_summary
+description: >
+  One row per user with plan, region and lifetime payments, as a snapshot built around
+  2026-07-29 and never refreshed: it holds only the 27,000 users who signed up before
+  2026-07-30 and payments up to then. Its payment counts, revenue and last payment dates
+  disagree with public.payments for about 2,200 users even before that date, in both
+  directions, so never use it for revenue, payment counts, churn or anything dated after
+  July 2026; use public.payments and public.subscriptions. It is safe for users by plan
+  and region at the snapshot.
+
+fields:
+  - name: user_id
+    type: integer
+    description: Unique identifier for the user. Joins to public.users.user_id.
+    role: relationship
+
+  - name: country
+    type: text
+    description: The user's region, copied from public.users.country (US, EU, India or Rest).
+    role: dimension
+
+  - name: signup_date
+    type: timestamp
+    description: Copied from public.users.signup_date. Runs to 2026-07-29.
+    role: dimension
+
+  - name: plan
+    type: text
+    description: The user's plan, copied from public.subscriptions.plan. One of free, monthly or annual.
+    role: dimension
+
+  - name: total_payments
+    type: integer
+    description: >
+      Number of payments the user had made by the snapshot. 0 for users with none (all
+      free users and 638 monthly or annual users). Disagrees with public.payments for about
+      2,200 users; don't use it for payment counts.
+    role: dimension
+
+  - name: total_revenue_usd
+    type: numeric
+    description: >
+      Sum of the user's payments in USD at the snapshot, 0 when there are none. Disagrees
+      with public.payments for the same users; don't use it for revenue.
+    role: dimension
+
+  - name: last_payment_date
+    type: timestamp
+    description: Date of the user's latest payment at the snapshot. Empty when total_payments is 0. Disagrees with public.payments for the same users.
+    role: dimension
+
+relationships:
+  - field: user_id
+    references: public.users.user_id
+    relationship_type: one_to_one
+    description: Every row has a user; users who signed up from 2026-07-30 have no row.
+
+notes:
+  - Checked 2026-11-16 against public.payments up to 2026-07-29: 1,326 users have more payments in the mart than in the database (mart last payment up to a year later), 919 have fewer. The database's payment history was changed after the mart was built.

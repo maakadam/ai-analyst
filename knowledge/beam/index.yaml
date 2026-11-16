@@ -13,7 +13,6 @@ conventions:
   - Start from a golden query when one answers the question or a close variant of it.
 
 not_yet_covered:   # say a question isn't covered rather than guess
-  - marts.user_revenue_summary
   - ml.churn_snapshot
   - ml.trial_snapshot
 
@@ -47,6 +46,7 @@ tables:
   measures: [avg_dau, avg_stickiness, period_end_mau]
   derived_dimensions: [activity_month]
   golden_queries: [monthly_stickiness]
+- {table: marts.user_revenue_summary, file: user_revenue_summary.yaml, description: 'One row per user with plan, region and lifetime payments, as a snapshot built around 2026-07-29 and never refreshed: it holds only the 27,000 users who signed up before 2026-07-30 and payments up to then. Its payment counts, revenue and last payment dates disagree with public.payments for about 2,200 users even before that date, in both directions, so never use it for revenue, payment counts, churn or anything dated after July 2026; use public.payments and public.subscriptions. It is safe for users by plan and region at the snapshot.'}
 - table: public.users
   file: users.yaml
   description: One row per Beam user account. Use it for signups, and to break any metric down by region (country) or signup device.
@@ -59,3 +59,4 @@ joins:
 - public.sessions.user_id → public.users.user_id (many_to_one)
 - public.subscriptions.user_id → public.users.user_id (one_to_one)
 - public.trials.user_id → public.users.user_id (one_to_one)
+- marts.user_revenue_summary.user_id → public.users.user_id (one_to_one)
