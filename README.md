@@ -78,6 +78,14 @@ Try it with the course question:
 
 Why the skills work the way they do is in `DECISIONS.md`.
 
+## How changes reach main
+
+`main` is protected: no direct pushes and no force pushes. Every change comes in through a pull request, one per piece of work (a step in building the analyst, or one analysis).
+
+- Rebase the branch onto `main` before opening the PR.
+- Merge with a merge commit, not squash, so each PR shows as one unit on `main` and the commits inside keep their messages.
+- Analysis PRs are for review: merge the runs worth keeping and close the rest with a short comment.
+
 ## Project Structure
 
 ```
