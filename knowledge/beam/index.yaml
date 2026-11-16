@@ -13,10 +13,12 @@ conventions:
   - Start from a golden query when one answers the question or a close variant of it.
 
 not_yet_covered:   # say a question isn't covered rather than guess
-  - marts.user_activity_metrics
-  - marts.user_revenue_summary
   - ml.churn_snapshot
   - ml.trial_snapshot
+
+excluded:   # never query these; use the tables named instead
+  - table: marts.user_revenue_summary
+    reason: Unverified. No comments in the database, a snapshot from about 2026-07-29, and its payments disagree with public.payments for 2,245 users. Use public.payments and public.subscriptions.
 
 tables:
 - table: public.payments
@@ -42,6 +44,12 @@ tables:
   description: One row per 14-day full-access trial. Use it for trials, trial outcomes and trial-to-paid conversion. Trials launched on 2026-08-01, so there is no trial data before then. A trial converts to a paid plan automatically at ends_at unless the user cancels during it. A converted trial starts a monthly or annual subscription on outcome_at; a canceled trial leaves the user on a free plan starting at ends_at.
   measures: [matured_trials, converted_trials]
   golden_queries: [weekly_trial_conversion_rate]
+- table: marts.user_activity_metrics
+  file: user_activity_metrics.yaml
+  description: One row per day from 2024-01-01 to 2026-09-24 with daily, weekly and monthly active users, built from public.sessions. Use it for active-user trends and stickiness (dau / mau) without scanning sessions. It has no user_id, so it can't be broken down by plan, region or trial; use public.sessions for that.
+  measures: [avg_dau, avg_stickiness, period_end_mau]
+  derived_dimensions: [activity_month]
+  golden_queries: [monthly_stickiness]
 - table: public.users
   file: users.yaml
   description: One row per Beam user account. Use it for signups, and to break any metric down by region (country) or signup device.

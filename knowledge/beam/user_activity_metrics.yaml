@@ -1,0 +1,68 @@
+table: marts.user_activity_metrics
+description: >
+  One row per day from 2024-01-01 to 2026-09-24 with daily, weekly and monthly active
+  users, built from public.sessions. Use it for active-user trends and stickiness
+  (dau / mau) without scanning sessions. It has no user_id, so it can't be broken down by
+  plan, region or trial; use public.sessions for that.
+
+fields:
+  - name: date
+    type: date
+    description: The day the counts end on. One row per day, no gaps.
+    role: dimension
+
+  - name: dau
+    type: integer
+    description: Distinct users with at least one session on the date.
+    role: dimension
+
+  - name: wau
+    type: integer
+    description: >
+      Distinct users with a session in the 7 days ending on the date (date - 6 to date).
+      Counts only sessions from 2024-01-01, so it is too low from 2024-01-01 to 2024-01-06.
+    role: dimension
+
+  - name: mau
+    type: integer
+    description: >
+      Distinct users with a session in the 30 days ending on the date (date - 29 to date),
+      a rolling window, not the calendar month. On a month's last day it matches
+      public.sessions active_users for that month only when the month has 30 days. Counts only sessions from 2024-01-01, so it is too low from
+      2024-01-01 to 2024-01-29.
+    role: dimension
+
+measures:
+  - name: avg_dau
+    formula: AVG(dau) FILTER (WHERE date >= period_start AND date < period_end)
+    description: Average daily active users over the period.
+
+  - name: avg_stickiness
+    formula: AVG(dau::numeric / mau) FILTER (WHERE date >= period_start AND date < period_end)
+    description: Average of the daily dau / mau ratio over the period, the share of a 30-day active base that shows up on a given day.
+
+  - name: period_end_mau
+    formula: (ARRAY_AGG(mau ORDER BY date DESC) FILTER (WHERE date >= period_start AND date < period_end))[1]
+    description: mau on the last day of the period, the rolling 30-day active base at that point. Don't sum or average mau across days.
+
+derived_dimensions:
+  - name: activity_month
+    description: The calendar month of the date, for monthly averages.
+    formula: DATE_TRUNC('month', date)::date
+
+golden_queries:
+  - name: monthly_stickiness
+    description: Average daily active users, month-end rolling 30-day actives and average dau / mau per calendar month, February 2024 to August 2026
+    sql: |
+      SELECT DATE_TRUNC('month', date)::date AS activity_month,
+             ROUND(AVG(dau)) AS avg_dau,
+             (ARRAY_AGG(mau ORDER BY date DESC))[1] AS month_end_mau,
+             ROUND(AVG(dau::numeric / mau), 3) AS avg_stickiness
+      FROM marts.user_activity_metrics
+      WHERE date >= DATE '2024-02-01'
+        AND date <  DATE '2026-09-01'
+      GROUP BY 1
+      ORDER BY 1;
+
+notes:
+  - dau, wau and mau match counts from public.sessions exactly (checked for September 2026 and from 2024-01-30), as the database's table comment says they should. That comment says "since 2025", but the data starts on 2024-01-01.
