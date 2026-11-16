@@ -19,6 +19,7 @@ Why the skills work the way they do. The goal is a general analyst assistant for
 
 ## Analyse
 - **Kept close to the course version**, plus one rule: every claim has a table. Validate and deliver only trust what is in a result CSV, so a check that lives in the conversation cannot reach the brief.
+- **Explore with `execute_sql`, compute in `analysis.py`.** A test showed a typical aggregate costs under 1,000 tokens through the MCP, so neither a query subagent nor a query helper earns its extra layer. Numbers that count come from `analysis.py`, which queries the database and saves its CSVs, so the run stays rerunnable.
 - **Tried and dropped: an "orient" step** (group sizes and base rates before the plan). It added length, and as its own skill it would apply the frame's filters separately and drift from the findings. Kept as an idea in `TODO.md`.
 
 ## Validate
