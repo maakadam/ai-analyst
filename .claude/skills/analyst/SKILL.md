@@ -24,7 +24,7 @@ Every step below follows these rules.
 ## The steps
 
 1. Run the `frame` skill with the question above: read `.claude/skills/frame/SKILL.md` and follow it. Note the run folder it created.
-2. For each table named under "Tables likely involved" in the frame note that has no `knowledge/beam/<table>.md`, run the `profile` skill on it (`.claude/skills/profile/SKILL.md`).
+2. For each table named under "Tables likely involved" in the frame note that has no YAML in `knowledge/beam/`, run the `profile` skill on it (`.claude/skills/profile/SKILL.md`).
 3. Run the `analyse` skill on the run folder (`.claude/skills/analyse/SKILL.md`).
 4. Run the `validate` skill on the run folder (`.claude/skills/validate/SKILL.md`), then act on its verdict:
    - **Fix first:** fix `analysis.py` from the findings, rerun it, and validate again. If the second round is still Fix first, stop and report the findings; write no brief.

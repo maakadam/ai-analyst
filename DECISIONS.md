@@ -17,6 +17,9 @@ Why the skills work the way they do. The goal is a general analyst assistant for
 - **A peer check.** A fresh agent hears a short pitch and replies "makes sense" or with at most three questions: a cheap second opinion.
 - **Money at stake.** When the decision has a money side, frame suggests sizing it for the whole affected group. It sits in frame rather than analyse, so analyse stays close to the course version.
 
+## Profile
+- **Checks the YAML, doesn't write notes.** Profile tests the YAML and the database comments against aggregate SQL and proposes changes only where the data disagrees or SQL would be written differently, so each table keeps one source of truth. A table it can't trust is proposed for `excluded` instead.
+
 ## Analyse
 - **Kept close to the course version**, plus one rule: every claim has a table. Validate and deliver only trust what is in a result CSV, so a check that lives in the conversation cannot reach the brief.
 - **Explore with `execute_sql`, compute in `analysis.py`.** A test showed a typical aggregate costs under 1,000 tokens through the MCP, so neither a query subagent nor a query helper earns its extra layer. Numbers that count come from `analysis.py`, which queries the database and saves its CSVs, so the run stays rerunnable.
@@ -45,5 +48,6 @@ Why the skills work the way they do. The goal is a general analyst assistant for
 - **`index.yaml` is generated.** `helpers/build_index.py` builds it from the table files and `_index_header.yaml`, so it never drifts; edit those, never the index.
 - **Quirks vs table YAML.** A fact about one table lives in that table's YAML; `quirks.md` holds only facts that span tables or are about reading results. The rule sits in AGENTS.md, so every session sees it and no fact gets two homes.
 - **`main` is protected.** Every change reaches `main` through a PR from a branch rebased onto it and merged with a merge commit, so each step shows as one unit and its commits keep their evidence. A GitHub ruleset and `deny` rules in `.claude/settings.json` block direct and force pushes.
+- **Name columns, explore small.** SQL names every column and never uses `SELECT *`, and exploration starts from a small slice such as the latest date, so every query reads only what it needs and `sessions` is never scanned blind.
 - **The index rebuilds itself.** A hook in `.claude/settings.json` reruns the builder after any edit to a `.yaml` file in `knowledge/beam/`, so no one has to remember.
 - **`outputs/` is gitignored**, so runs stay local by default. One run is force-added as a worked example; an earlier run of the same question is kept on the `archive/march-price-retention-v1` branch rather than on main, so main holds one answer per question.

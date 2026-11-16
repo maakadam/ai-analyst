@@ -1,83 +1,63 @@
 ---
 name: profile
-description: Profiles one of Beam's tables from the data itself and writes what it learned into the knowledge folder, so the next analysis starts from facts instead of column names. Use before trusting a table you have not worked with, or when an analysis needs a table that has no note in knowledge/beam/.
+description: Checks one of Beam's database tables against its YAML in knowledge/beam/ with aggregate SQL, and proposes YAML changes where the data disagrees or the YAML misses something that changes how SQL is written. A table with no YAML gets a draft. Use before trusting a table you have not worked with, or when an analysis needs a table that has no YAML.
 user-invocable: true
-allowed-tools: Read Bash Write Edit AskUserQuestion
-argument-hint: <path to a CSV in data/, or a table name>
+allowed-tools: Read Write Edit AskUserQuestion mcp__course-db__list_tables mcp__course-db__execute_sql
+argument-hint: <schema.table>
 ---
 
-You profile a table before anyone trusts it.
+You check a table before anyone trusts it.
 
-The failure you exist to prevent: a question about a table gets answered from its column names alone. The schema says `outcome`, so the analyst counts outcomes, and nobody notices that a fifth of them are empty because those trials have not finished yet. The names looked obvious. The data said something else.
+The failure you exist to prevent: a question gets answered from what the table is said to hold, not what it holds. The schema says `outcome`, so the analyst counts outcomes, and nobody notices that a fifth of them are empty because those trials have not finished yet. The YAML, the column comment and the name all looked right. The data said something else.
 
-Your job is to describe the table from the data, not from the schema, and to write down what you learned in `knowledge/beam/<table>.md` so the next analysis does not have to rediscover it.
+Your job is to test what the YAML and the database comments say against the data, and to change the YAML only where the data proves it wrong or incomplete.
 
 ## What this is NOT
 
 - Not analysis. You describe the table; you do not answer a business question with it.
-- Not cleaning. You never modify, filter or rewrite anything in `data/`.
-- Not a schema dump. A list of column names and types is where you start, not what you deliver.
+- Not a statistics dump. Counts and ranges are evidence for a claim, not content for the YAML.
+- Not a window into raw rows. Every query aggregates; every result lands in the conversation.
 
-## Act 1: Resolve the target (the gate)
+## Act 1: Find the table (the gate)
 
-1. If you were given a path, use it. If you were given a table name, it maps to `data/<name>.csv`.
-2. If the file does not exist, list the files that do exist in `data/`, say which one you could not find, and stop. Do not guess a near match.
+1. Take the table as `schema.table`; a bare name means `public`.
+2. Check it exists with `list_tables`. If not, name the tables that do and stop. Never guess a near match.
+3. If `knowledge/beam/index.yaml` lists it under `excluded`, give the reason and stop.
 
-## Act 2: Profile from the data
+## Act 2: Read what is known
 
-1. From the repo root, run `poetry run python helpers/profile.py <path>` and read the JSON it prints.
-2. Every count, rate, range and distinct value you report comes from that output. Never hand-roll a count, and never read raw rows into the conversation to count them yourself.
-3. Look hardest at four things: the grain guess and the duplicate ids, the null rates, the date ranges, and the small value sets.
+1. Read `knowledge/beam/index.yaml`, the table's YAML in full if it has one, `quirks.md` and `corrections.md`.
+2. Read the table and column comments from the database (`pg_description`).
+3. List the claims to test: grain, nulls, value sets, date ranges, relationships, and any caveat in a description. With no YAML, the claims come from the comments and the column names.
 
-## Act 3: Read what is already known
+## Act 3: Test against the data
 
-1. Read `knowledge/beam/quirks.md`.
-2. If `knowledge/beam/<table>.md` already exists, read it. Anything a person wrote there is a fact you keep.
-3. Match what the profile shows against the quirks. A null rate or a date range a quirk already explains is expected. One no quirk explains is what the verdict is about.
+1. One aggregate query per claim or small group of claims through `execute_sql`; keep results under about 200 rows.
+2. Always cover: row count; per column, nulls and distinct count; duplicate ids (the grain); the values of any column with 20 or fewer; date ranges, whether timestamps carry a time, and any dates past the analysis date; each relationship joins without orphans or fan-out.
+3. A table built from others (marts, ml): recompute a few of its columns from the source tables and compare.
+4. Note each claim as holds, wrong, or missing from the YAML.
 
-## Act 4: Write the note
+## Act 4: Propose YAML changes
 
-1. Build the base of the note from the profile with a two-line script run from the repo root:
-
-   ```bash
-   poetry run python -c "from helpers.profile import profile_csv, profile_to_markdown
-   print(profile_to_markdown(profile_csv('<path>')))"
-   ```
-
-2. Write it to `knowledge/beam/<table>.md`. If the note already exists, replace the generated sections (grain line, columns, date ranges, low-cardinality values) with the fresh output and keep every sentence a person wrote, in `## Meaning` and anywhere else.
-3. Fill the `## Meaning` section: one line per column saying what it means for the business, inferred from its name, its values and the quirks. Mark each inference with "(inferred)" until a person confirms it. Where a quirk explains a column's nulls or range, say so and name the quirk.
-4. State the grain in plain words under the generated grain line if the data supports it, marked as inferred.
+1. Propose a change only where the data disagrees with the YAML, or the YAML lacks a fact that changes how SQL is written.
+2. No profiling statistics in the YAML: a count goes in only when it is the fact itself.
+3. A table with no YAML gets a full draft in the shape of the others.
+4. If the table can't be trusted (it disagrees with its sources, or nothing explains it), propose adding it to `excluded` in `knowledge/beam/_index_header.yaml` with a one-line reason, instead of a YAML.
+5. Show each change as the exact text, in the YAML or `quirks.md` as AGENTS.md says, and ask with AskUserQuestion. Apply only on a yes.
 
 ## Act 5: Verdict
 
-Give one verdict:
-
-- **Proceed**: the grain is clear, and every null rate and duplicate is explained.
+- **Proceed**: the YAML matches the data.
 - **Caution**: something is unexplained. Name it.
 - **Blocked**: the table cannot answer questions at this grain. Say why.
 
-Follow it with the reasons, one line each.
-
-## Act 6: Propose new quirks
-
-If the profile shows something that is not in `quirks.md`, propose the exact sentence you would add and ask with AskUserQuestion whether to append it. Append only on a yes. On a no, leave `quirks.md` untouched and keep the point in the verdict.
-
 ## Deliver
 
-The note is the deliverable. On the CLI, show only:
-
-- The verdict and its reasons, one line each.
-- The path of the note you wrote or updated.
-- Any quirk you proposed and what was decided.
-
-Keep it under fifteen lines. Do not paste the note into the CLI.
+On the CLI, show only the verdict with one reason per line, each change applied or declined, and the YAML path. Under fifteen lines.
 
 ## Principles
 
-- **Describe from the data.** The schema tells you what a column was meant to hold. The profile tells you what it holds.
-- **Code counts, you read.** Every number comes from `helpers/profile.py`. None comes from prose arithmetic.
-- **Write it down once.** What you learn goes into the note, so no later analysis pays for it again.
-- **A guess is labelled a guess.** Every meaning you infer says "(inferred)" until a person confirms it.
-- **Keep what people wrote.** Updating a note never deletes a fact someone added by hand.
-- **Quirks are appended only with consent.** You propose the sentence; a person decides.
-- **The note is for the next reader, not this run.** Write it so someone opening it cold can trust the table or know exactly why not.
+- **The data decides.** The YAML, the comments and the names are claims until the data agrees.
+- **SQL counts, you read.** Every number comes from a query result, none from prose arithmetic.
+- **Change only what the data proves.** A YAML that holds is left alone.
+- **Changes only with consent.** You propose the text; a person decides.
