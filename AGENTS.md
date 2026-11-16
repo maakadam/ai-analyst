@@ -26,5 +26,6 @@ outputs/<date>_<slug>/   one folder per question:
 - The data ends on 2026-09-24. Treat that as "today" inside every analysis, never the real date.
 - No em dashes in anything written for a reader.
 - Before touching data, read `knowledge/beam/index.yaml`, then the YAML of each table in play in full, then `quirks.md` and `corrections.md`.
+- A new fact about one table goes in its YAML: in the field's description if it changes how SQL is written, otherwise in `notes`. Only facts that span tables or are about reading results go in `quirks.md`. One home per fact.
 - When the user corrects you, append one dated line to `corrections.md` and continue.
 - Before changing anything in `.claude/skills/` or `helpers/`, read `DECISIONS.md` and `TODO.md`; when a change sets or drops a rule, add or update one line in `DECISIONS.md`.
