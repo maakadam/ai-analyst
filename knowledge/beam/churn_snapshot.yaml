@@ -1,0 +1,119 @@
+table: ml.churn_snapshot
+description: >
+  One row per user with an active paid subscription on the snapshot date, with activity
+  and payment features and whether the subscription ended in the next 90 days: a training
+  set for churn models. Versioned by snapshot_date and append-only; it holds one snapshot
+  today (2026-04-30, 7,690 subscribers). Read it through the view ml.churn_snapshot_latest,
+  which keeps only the newest snapshot. Its churn label comes from end_date, not from
+  missed renewals, so for monthly churn rates use missed_monthly_renewals in
+  public.payments instead.
+
+fields:
+  - name: user_id
+    type: integer
+    description: The subscriber. Joins to public.users.user_id; unique within a snapshot.
+    role: relationship
+
+  - name: snapshot_date
+    type: date
+    description: The day the features are measured on. Features use activity on or before this day only.
+    role: dimension
+
+  - name: plan
+    type: text
+    description: The subscription plan, monthly or annual (no free users).
+    role: dimension
+
+  - name: country
+    type: text
+    description: The user's region, copied from public.users.country (US, EU, India or Rest).
+    role: dimension
+
+  - name: device_type
+    type: text
+    description: The signup device, copied from public.users.device_type (iOS, Android or Web).
+    role: dimension
+
+  - name: tenure_days
+    type: integer
+    description: Days from the user's signup day to snapshot_date.
+    role: dimension
+
+  - name: subscription_age_days
+    type: integer
+    description: Days from the subscription start day to snapshot_date.
+    role: dimension
+
+  - name: sessions_last_30d
+    type: integer
+    description: Sessions in the 30 days ending on snapshot_date, including it.
+    role: dimension
+
+  - name: sessions_last_90d
+    type: integer
+    description: Sessions in the 90 days ending on snapshot_date, including it.
+    role: dimension
+
+  - name: avg_session_minutes_90d
+    type: numeric
+    description: Average duration_minutes over the same 90 days; 0 when there were no sessions.
+    role: dimension
+
+  - name: listen_share_90d
+    type: numeric
+    description: Share of the same 90 days' sessions with activity_type listen, 0 to 1; 0 when there were no sessions.
+    role: dimension
+
+  - name: days_since_last_session
+    type: integer
+    description: Days from the user's last session to snapshot_date. Capped at 365, which also means no session in the past year.
+    role: dimension
+
+  - name: total_payments
+    type: integer
+    description: Payments the user had made by snapshot_date. One lower than public.payments for 35 monthly subscribers.
+    role: dimension
+
+  - name: last_payment_amount
+    type: numeric
+    description: Amount in USD of the user's latest payment by snapshot_date; 0 when there is none.
+    role: dimension
+
+  - name: churned_within_90d
+    type: integer
+    description: >
+      1 if the subscription's end_date falls in the 90 days after snapshot_date, else 0. It
+      reads end_date, so it carries end_date's recording change (see public.subscriptions)
+      and doesn't match missed renewals for monthly plans.
+    role: dimension
+
+relationships:
+  - field: user_id
+    references: public.users.user_id
+    relationship_type: one_to_one
+    description: One row per user within a snapshot; join only within one snapshot_date.
+
+measures:
+  - name: snapshot_subscribers
+    formula: COUNT(user_id)
+    description: Active paid subscribers on the snapshot date. Read from ml.churn_snapshot_latest, or filter on one snapshot_date.
+
+  - name: snapshot_churned_90d
+    formula: SUM(churned_within_90d)
+    description: Subscribers whose subscription ended within 90 days of the snapshot. The 90-day churn rate is snapshot_churned_90d / snapshot_subscribers, or AVG(churned_within_90d).
+
+golden_queries:
+  - name: churn_within_90d_by_plan
+    description: Subscribers, 90-day churners and 90-day churn rate by plan in the latest snapshot
+    sql: |
+      SELECT plan,
+             COUNT(user_id) AS subscribers,
+             SUM(churned_within_90d) AS churned_within_90d,
+             ROUND(AVG(churned_within_90d), 4) AS churn_rate_90d
+      FROM ml.churn_snapshot_latest
+      GROUP BY 1
+      ORDER BY 1;
+
+notes:
+  - Checked 2026-11-16 against public.subscriptions, public.users, public.sessions and public.payments: plan, region, device, tenure, subscription age and every session feature match exactly; the subscriber list and churn label differ for under ten users at the date boundaries.
+  - The database comment says to pull the view once and save it as a file; that is advice for model training. For analysis, query it through course-db like any table.

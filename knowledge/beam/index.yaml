@@ -12,15 +12,16 @@ conventions:
   - Use the defined measures, derived dimensions and joins; don't invent your own.
   - Start from a golden query when one answers the question or a close variant of it.
 
-not_yet_covered:   # say a question isn't covered rather than guess
-  - ml.churn_snapshot
-  - ml.trial_snapshot
-
 excluded:   # never query these; use the tables named instead
   - table: marts.user_revenue_summary
     reason: Unverified. No comments in the database, a snapshot from about 2026-07-29, and its payments disagree with public.payments for 2,245 users. Use public.payments and public.subscriptions.
 
 tables:
+- table: ml.churn_snapshot
+  file: churn_snapshot.yaml
+  description: 'One row per user with an active paid subscription on the snapshot date, with activity and payment features and whether the subscription ended in the next 90 days: a training set for churn models. Versioned by snapshot_date and append-only; it holds one snapshot today (2026-04-30, 7,690 subscribers). Read it through the view ml.churn_snapshot_latest, which keeps only the newest snapshot. Its churn label comes from end_date, not from missed renewals, so for monthly churn rates use missed_monthly_renewals in public.payments instead.'
+  measures: [snapshot_subscribers, snapshot_churned_90d]
+  golden_queries: [churn_within_90d_by_plan]
 - table: public.payments
   file: payments.yaml
   description: One row per payment transaction on a subscription. Use it for revenue, paying subscriptions, prices and payment methods.
@@ -39,6 +40,11 @@ tables:
   measures: [paid_subscriptions_at_period_start, churned_subscriptions]
   derived_dimensions: [tenure_band]
   golden_queries: [monthly_paid_churn_rate, paid_churn_rate_by_country]
+- table: ml.trial_snapshot
+  file: trial_snapshot.yaml
+  description: One row per trial with its first three days of activity and whether it converted, a training set for trial-conversion models. Versioned by snapshot_date and append-only; it holds one snapshot today (2026-09-24, 1,516 trials started 2026-08-01 to 2026-09-09). Read it through the view ml.trial_snapshot_latest, which keeps only the newest snapshot. Use it for conversion by early activity, region or device. For anything past day 3, or trials ending on the snapshot date, use public.trials and public.sessions.
+  measures: [snapshot_trials, snapshot_converted_trials]
+  golden_queries: [trial_conversion_by_device]
 - table: public.trials
   file: trials.yaml
   description: One row per 14-day full-access trial. Use it for trials, trial outcomes and trial-to-paid conversion. Trials launched on 2026-08-01, so there is no trial data before then. A trial converts to a paid plan automatically at ends_at unless the user cancels during it. A converted trial starts a monthly or annual subscription on outcome_at; a canceled trial leaves the user on a free plan starting at ends_at.
@@ -58,7 +64,9 @@ tables:
   golden_queries: [monthly_signups_by_country]
 
 joins:
+- ml.churn_snapshot.user_id → public.users.user_id (one_to_one)
 - public.payments.subscription_id → public.subscriptions.subscription_id (many_to_one)
 - public.sessions.user_id → public.users.user_id (many_to_one)
 - public.subscriptions.user_id → public.users.user_id (one_to_one)
+- ml.trial_snapshot.trial_id → public.trials.trial_id (one_to_one)
 - public.trials.user_id → public.users.user_id (one_to_one)
