@@ -13,7 +13,6 @@ conventions:
   - Start from a golden query when one answers the question or a close variant of it.
 
 not_yet_covered:   # say a question isn't covered rather than guess
-  - public.sessions
   - marts.user_activity_metrics
   - marts.user_revenue_summary
   - ml.churn_snapshot
@@ -26,6 +25,12 @@ tables:
   measures: [revenue_usd, paying_subscriptions, monthly_renewals_due, missed_monthly_renewals]
   derived_dimensions: [renewal_due_date, next_payment_date]
   golden_queries: [monthly_revenue_by_plan, monthly_revenue_by_method, monthly_renewal_churn_rate]
+- table: public.sessions
+  file: sessions.yaml
+  description: 'One row per app session (about 4.3 million rows, January 2022 to September 2026). Use it for engagement: active users, session counts, minutes and activity type, including what trial users do in their first days. The table is very large: query it only with aggregates (COUNT, SUM, AVG, COUNT DISTINCT) grouped to a small result, never select rows from it, and filter on session_date to keep scans short. Sessions run to 2026-09-26, two days past the analysis date: cap every query at session_date < analysis_date + 1 day.'
+  measures: [sessions, active_users, session_minutes]
+  derived_dimensions: [session_day, trial_day]
+  golden_queries: [monthly_active_users, sessions_by_trial_day]
 - table: public.subscriptions
   file: subscriptions.yaml
   description: One row per user's subscription (one per user, so plan switches are not visible). Use it for plans, active subscriptions, churn and churn rate, and tenure bands. Read monthly churn from missed renewals in public.payments (missed_monthly_renewals), annual churn from end_date, never from status.
@@ -46,5 +51,6 @@ tables:
 
 joins:
 - public.payments.subscription_id → public.subscriptions.subscription_id (many_to_one)
+- public.sessions.user_id → public.users.user_id (many_to_one)
 - public.subscriptions.user_id → public.users.user_id (one_to_one)
 - public.trials.user_id → public.users.user_id (one_to_one)

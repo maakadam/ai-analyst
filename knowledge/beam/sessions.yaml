@@ -1,0 +1,108 @@
+table: public.sessions
+description: >
+  One row per app session (about 4.3 million rows, January 2022 to September 2026). Use it
+  for engagement: active users, session counts, minutes and activity type, including what
+  trial users do in their first days. The table is very large: query it only with
+  aggregates (COUNT, SUM, AVG, COUNT DISTINCT) grouped to a small result, never select
+  rows from it, and filter on session_date to keep scans short. Sessions run to 2026-09-26,
+  two days past the analysis date: cap every query at session_date < analysis_date + 1 day.
+
+fields:
+  - name: session_id
+    type: integer
+    description: Unique identifier for the session.
+    role: entity
+
+  - name: user_id
+    type: integer
+    description: The user who had the session. Joins to public.users.user_id.
+    role: relationship
+
+  - name: session_date
+    type: timestamp
+    description: >
+      The day of the session. Stored as a timestamp but always midnight, so there is no
+      time of day: compare and group on session_date::date. A user can have several
+      sessions on one day. Sessions on a signup or trial start day sit before the exact
+      signup time, so compare with users.signup_date and trials.started_at on dates, not
+      timestamps. The 273 sessions dated 2026-09-25 and 2026-09-26 all belong to trial
+      users who signed up in the last days of data; leave them out.
+    role: dimension
+
+  - name: duration_minutes
+    type: integer
+    description: Length of the session in whole minutes, 1 to 157. Never zero or empty.
+    role: dimension
+
+  - name: activity_type
+    type: text
+    description: What the user did in the session. One of browse, listen or read.
+    role: dimension
+
+relationships:
+  - field: user_id
+    references: public.users.user_id
+    relationship_type: many_to_one
+    description: Every session has a user. Users with no sessions exist (about 1,600, half of them signed up in September 2026), so count users from public.users when they must all appear.
+
+measures:
+  - name: sessions
+    formula: COUNT(session_id) FILTER (WHERE session_date >= period_start AND session_date < period_end)
+    description: Sessions in the period.
+
+  - name: active_users
+    formula: COUNT(DISTINCT user_id) FILTER (WHERE session_date >= period_start AND session_date < period_end)
+    description: >
+      Users with at least one session in the period. Over one day this is daily active
+      users and matches marts.user_activity_metrics.dau; over a month it is monthly active
+      users for that calendar month.
+
+  - name: session_minutes
+    formula: SUM(duration_minutes) FILTER (WHERE session_date >= period_start AND session_date < period_end)
+    description: Total minutes across sessions in the period. Average session length is session_minutes / sessions.
+
+derived_dimensions:
+  - name: session_day
+    description: The calendar day of the session, for daily counts.
+    formula: session_date::date
+
+  - name: trial_day
+    description: >
+      Day of the trial the session fell on, 1 for the trial start day up to 14. Needs the
+      join to public.trials on user_id, keeping sessions with session_date >=
+      started_at::date and session_date < ends_at::date. Leave out the day of ends_at: sessions
+      have no time, so it can't tell sessions before the trial ended from those after.
+    formula: (session_date::date - trials.started_at::date) + 1
+
+golden_queries:
+  - name: monthly_active_users
+    description: Monthly active users, sessions and average session minutes per calendar month, January to August 2026
+    sql: |
+      SELECT DATE_TRUNC('month', session_date)::date AS month,
+             COUNT(DISTINCT user_id) AS active_users,
+             COUNT(session_id) AS sessions,
+             ROUND(SUM(duration_minutes)::numeric / COUNT(session_id), 2) AS avg_session_minutes
+      FROM public.sessions
+      WHERE session_date >= DATE '2026-01-01'
+        AND session_date <  DATE '2026-09-01'
+      GROUP BY 1
+      ORDER BY 1;
+
+  - name: sessions_by_trial_day
+    description: Sessions and active trial users per day of the trial, for trials that had ended by the analysis date (2026-09-24)
+    sql: |
+      SELECT (s.session_date::date - t.started_at::date) + 1 AS trial_day,
+             COUNT(DISTINCT s.user_id) AS active_trial_users,
+             COUNT(s.session_id) AS sessions
+      FROM public.trials t
+      JOIN public.sessions s
+        ON s.user_id = t.user_id
+       AND s.session_date >= t.started_at::date
+       AND s.session_date <  t.ends_at::date
+      WHERE t.ends_at < DATE '2026-09-25'
+      GROUP BY 1
+      ORDER BY 1;
+
+notes:
+  - activity_type and duration_minutes look generated independently; average length is 10.5 minutes for all three activity types.
+  - Monthly active users jump in September 2025 with the signup spike, and sessions rise in August 2026 when trials launched.
