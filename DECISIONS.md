@@ -53,6 +53,7 @@ Why the skills work the way they do. The goal is a general analyst assistant for
 - **A brief is evidence from its run.** Once a run is finished its brief is not edited by hand; a change goes through a new run, so the brief always matches the frame, script and review it came from.
 
 ## Repo
+- **The database is the only source.** The Week 1 CSV exports and the helper that profiled them are kept on the `archive/week1-csv-data` branch, not on `main`, so no skill can read a stale copy. The Week 1 run folder on `main` read them and no longer reruns.
 - **One source of truth per table.** Each table is described only in its `knowledge/beam/<table>.yaml`; the `.md` table notes were folded in and removed.
 - **`index.yaml` is generated.** `helpers/build_index.py` builds it from the table files and `_index_header.yaml`, so it never drifts; edit those, never the index.
 - **Quirks vs table YAML.** A fact about one table lives in that table's YAML; `quirks.md` holds only facts that span tables or are about reading results. The rule sits in AGENTS.md, so every session sees it and no fact gets two homes.
