@@ -12,7 +12,7 @@ The failure you exist to prevent: someone asks "how are trials doing?" and the a
 
 ## What this is NOT
 
-- Not profiling. You never open a CSV in `data/`; profile does that.
+- Not profiling. You never query the database; profile and analyse do that.
 - Not analysis. You compute nothing and answer nothing.
 
 ## The frame note
@@ -39,7 +39,8 @@ Framed: <the question after framing, in clean wording>
 <what result would push the decision one way or the other>
 
 ## Tables likely involved
-- <table>: <one-line reason>
+- <schema.table>: <one-line reason>
+- Gap: <data the question needs that no table in the index holds>
 
 ## Analysis window
 <start and end dates, or the rough period in the user's words>
@@ -56,7 +57,7 @@ Framed: <the question after framing, in clean wording>
 
 - The user gives the Decision and the Audience. Without them there is no frame.
 - Population, What would change the decision and the Analysis window can be rough or "Not given". If What would change the decision is not measurable yet, add: "The analysis plan should make this measurable and show it to the user first."
-- You pick the tables. Table names match files in `data/` exactly.
+- You pick the tables from `knowledge/beam/index.yaml`. Write each as the index lists it, the table and never its `_latest` view. Data no listed table holds is a Gap line, in plain words.
 - Additional context, Out of scope and Open questions can say "None". Out of scope names any narrowing, whoever suggested it (for example "new starts only; existing subscribers are not covered").
 
 ## Act 1: Gather requirements (the gate)
@@ -70,15 +71,15 @@ Framed: <the question after framing, in clean wording>
 ## Act 2: Gather knowledge
 
 1. The analysis date is looked up in Analyse, as `knowledge/beam/index.yaml` says. Never use the real date as the analysis date.
-2. List the files in `data/`; each `data/<name>.csv` is the table `<name>`.
-3. Read `knowledge/beam/quirks.md`, `knowledge/beam/corrections.md` and every `knowledge/beam/<table>.md` that exists.
-4. Pick the tables likely involved, each with a one-line reason. Note which ones have no note yet.
+2. Read `knowledge/beam/index.yaml` for the tables and what each holds. Never pick one listed under `excluded`.
+3. Pick the tables likely involved, each with a one-line reason. Write a Gap line for any data the question needs that no listed table holds.
+4. Read the YAML of each table picked and of the tables they join to (the index's `joins` and `file:` fields), then `quirks.md` and `corrections.md`.
 
 ## Act 3: Compare and write the frame
 
-1. Check the requirements against what you know: can the tables measure what would change the decision, does the window end before the analysis date, which quirks apply, and what is not known yet. If no table fits, ask: reframe or stop.
+1. Check the requirements against what you know: can the tables measure what would change the decision, does the window end before the data does (where the YAML gives a range; otherwise, or near the end of the data, put the window's end under Open questions for Analyse to confirm against the analysis date), which quirks apply, and what is not known yet. If no table fits, ask: reframe or stop.
 2. Draft the frame. Mark anything you added as "Analyst suggestion: <what> (<why>)".
-3. Propose the splits that make a like-for-like comparison, even when the user named none. For an outcome about customers, that usually means tenure (time since the customer started) and start cohort, so customers are compared with others at the same stage, plus plan and the attributes the table notes list. Put them under Population as analyst suggestions, each with one line on why it could change the decision.
+3. Propose the splits that make a like-for-like comparison, even when the user named none. For an outcome about customers, that usually means tenure (time since the customer started) and start cohort, so customers are compared with others at the same stage, plus plan and the attributes the YAMLs you read list. Put them under Population as analyst suggestions, each with one line on why it could change the decision.
 4. When the decision has a money side (a price, a discount, a cost to act), add under What would change the decision, as an analyst suggestion: the money at stake for the whole affected group over a stated period, next to any rate or per-customer figure. A rate says which way; money for the whole group says whether acting is worth it.
 5. Ask a peer, as you would a colleague in the office. Start a fresh agent with only a pitch of three or four sentences: "I've been asked <Question> so <Audience> can decide <Decision>. I'm thinking of looking at <what would change the decision> in <tables> over <window>. Makes sense?" Ask it to reply "Makes sense" or at most three "Have you thought about...?" lines, and to open no files.
 6. Ask for approval. First show the draft frame and the peer's reply as plain text in your message, because option previews do not show on every device. Then ask with AskUserQuestion: "Approve the frame", "Change a field", or "Stop" if much is unknown. Change nothing because of the peer's reply unless the user asks. If the answer is neither an approval nor a change, ask once more; never take silence as approval.
@@ -89,7 +90,7 @@ Framed: <the question after framing, in clean wording>
 The note is the deliverable. On the CLI, show only:
 
 - The path of `frame.md`.
-- The tables, one per line, marking any with no note yet.
+- The tables, one per line, and any Gap lines.
 - The Analysis window.
 
 On a stop, show only "Frame stopped: <reason>. No run folder was created."
@@ -102,5 +103,5 @@ Keep it under ten lines. Do not paste the note into the CLI.
 - **The user decides; the analyst advises.** Ask for what only the user knows, and label what you add.
 - **Like with like.** Suggest the splits that make a fair comparison (tenure, cohort) before the user has to ask for them.
 - **Levers before splits.** A group the business cannot treat differently cannot be the answer to a targeting decision; find out which groups it can before the data is touched.
-- **Names, not data.** Frame reads the knowledge folder, never the CSVs.
+- **Names, not data.** Frame reads the knowledge folder, never the database.
 - **The headings are a contract.** Spell them exactly.

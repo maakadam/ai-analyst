@@ -24,11 +24,11 @@ Every step below follows these rules.
 ## The steps
 
 1. Run the `frame` skill with the question above: read `.claude/skills/frame/SKILL.md` and follow it. Note the run folder it created.
-2. For each table named under "Tables likely involved" in the frame note that has no YAML in `knowledge/beam/`, run the `profile` skill on it (`.claude/skills/profile/SKILL.md`).
+2. For each Gap line under "Tables likely involved" in the frame note, run the `profile` skill with that data need (`.claude/skills/profile/SKILL.md`). If no table holds it, tell the user the frame can't be fully answered and ask whether to go on.
 3. Run the `analyse` skill on the run folder (`.claude/skills/analyse/SKILL.md`).
 4. Run the `validate` skill on the run folder (`.claude/skills/validate/SKILL.md`), then act on its verdict:
-   - **Fix first:** fix `analysis.py` from the findings, rerun it, and validate again. If the second round is still Fix first, stop and report the findings; write no brief.
-   - **Think on it:** apply the Small fix findings (a filter, a baseline, a label), rerun the script once, and carry the rest into the brief: Needs the user findings to Open for you or the Appendix (deliver sorts them), unapplied Small fix findings to the Appendix as not verified, and Notes to the Appendix as they are. If a fix adds a result or changes a number the recommendation rests on, validate once more; if that gives Fix first, stop and write no brief.
+   - **Fix first:** fix `sql/` and `analysis.py` from the findings, rerun the changed queries and resave their CSVs, rerun the script, and validate again. If the second round is still Fix first, stop and report the findings; write no brief.
+   - **Think on it:** apply the Small fix findings (a filter, a baseline, a label) in `sql/` or `analysis.py`, rerun the changed queries and the script once, and carry the rest into the brief: Needs the user findings to Open for you or the Appendix (deliver sorts them), unapplied Small fix findings to the Appendix as not verified, and Notes to the Appendix as they are. If a fix adds a result or changes a number the recommendation rests on, validate once more; if that gives Fix first, stop and write no brief.
    - **Ship it:** go to deliver.
 5. Run the `deliver` skill on the run folder (`.claude/skills/deliver/SKILL.md`).
    If `review.md` has Proposed quirks, ask about each with AskUserQuestion and append to `knowledge/beam/quirks.md` only on a yes.

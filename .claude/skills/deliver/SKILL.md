@@ -12,7 +12,7 @@ You turn a checked analysis into a brief a business stakeholder can act on in tw
 Three inputs, in this order of weight:
 
 - **The frame** (`frame.md`) sets what the brief must answer: the decision, the audience, and what would change the decision.
-- **The analysis outputs** (the result CSVs in the run folder's `data/`, the charts in `charts/`, and `analysis.py` for what each table measures) supply the answer. The story of the brief comes from here.
+- **The analysis outputs** (the result CSVs in the run folder's `data/`, the charts in `charts/`, and the queries in `sql/` and `analysis.py` for what each table measures) supply the answer. The story of the brief comes from here.
 - **The review** (`review.md`) gates the brief and sets its limits: how far each claim can go, and what is not verified. It never sets the story.
 
 The failure you exist to prevent: a manager reads that a metric jumped after a change and reverses the change. The jump was seasonal, and the analysis knew it, but that sat in a caveat at the end. Or the opposite: the brief lists every caveat, ends on "it depends", and the manager still does not know what to do. A brief fails when the reader acts on more than the numbers support, or cannot act at all.
@@ -21,7 +21,7 @@ The failure you exist to prevent: a manager reads that a metric jumped after a c
 
 - Not new analysis. You compute nothing. Every number is already in a result CSV in the run folder.
 - Not a new review. You take the findings in `review.md` as they are.
-- Not fixing. You never edit `analysis.py`, `frame.md`, `review.md` or `data/`. You write only `brief.md`.
+- Not fixing. You never edit `sql/`, `analysis.py`, `frame.md`, `review.md` or `data/`. You write only `brief.md`.
 
 ## The readers
 
@@ -63,7 +63,7 @@ You write `outputs/<run>/brief.md` with exactly these headings. Other skills rea
 - <data, population, window, measure and comparison, in plain words>
 
 ### Sources
-- <each finding title>: data/<file>.csv, analysis.py (<line or step>)
+- <each finding title>: data/<name>.csv, the sql/ files it comes from, and analysis.py (<step>) when the pandas step made or changed it
 
 ### Checks
 - Checked: <...>
@@ -79,13 +79,13 @@ You write `outputs/<run>/brief.md` with exactly these headings. Other skills rea
 ## Act 1: Read the run (the gate)
 
 1. Use the argument, or the newest run folder under `outputs/`.
-2. It needs `frame.md`, `analysis.py`, `data/` and `review.md`. If one is missing, stop and say which skill to run: /analyse or /validate.
+2. It needs `frame.md`, `sql/`, `analysis.py`, `data/` and `review.md`. If one is missing, stop and say which skill to run: /analyse or /validate.
 3. If the verdict in `review.md` is Fix first, stop: "The numbers cannot be trusted yet; fix the findings in review.md first."
 
 ## Act 2: Decide what you are recommending
 
 1. Read `frame.md`: the Question, the Decision it informs, the Audience and What would change the decision. This is what the brief must answer.
-2. Read the analysis outputs: the result CSVs in `data/`, the charts in `charts/`, and `analysis.py` for what each table measures and which comparison it carries.
+2. Read the analysis outputs: the result CSVs in `data/`, the charts in `charts/`, and the queries in `sql/` and `analysis.py` for what each table measures and which comparison it carries.
 3. For each part of What would change the decision, mark it answered, partly answered or not answered from those outputs.
 4. If nothing answers the decision, stop: "The results do not answer <decision>; run /analyse again."
 5. Write the answer to the Question in one sentence, then the action it implies. This is the recommendation.
