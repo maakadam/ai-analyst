@@ -80,5 +80,5 @@ golden_queries:
 
 notes:
   - Monthly revenue jumps in March 2026 because of the price rise from $10 to $12, not because of more subscribers.
-  - A few paid subscriptions started from 2025 on have no payments at all; unexplained.
+  - 235 paid subscriptions from the 2025-09-17 block have no payments; unexplained, so say so whenever they enter a count. Paid subscriptions that start after the analysis date have no payments yet.
   - Annual plans are charged $100 up front, so annual revenue arrives in lumps rather than spread over the year.

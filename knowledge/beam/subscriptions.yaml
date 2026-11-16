@@ -116,5 +116,5 @@ golden_queries:
       ORDER BY m.month_start, u.country;
 
 notes:
-  - Bulk start days 2025-09-17 (the September 2025 signup spike), 2026-07-30 and 2026-09-25 are not organic signups.
+  - Bulk start days are blocks, not organic signups; say so whenever one enters a comparison. 2025-09-17 (the September 2025 signup spike, 1,385 paid), 2026-07-30 (403 paid) and 2026-09-25 (582 paid, after the analysis date, none from trials).
   - Monthly end dates were recorded differently from October 2025, so churn compared across that month isn't like for like.
