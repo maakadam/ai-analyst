@@ -4,7 +4,7 @@ description: >
   trial-to-paid conversion. Trials launched on 2026-08-01, so there is no trial data
   before then. A trial converts to a paid plan automatically at ends_at unless the
   user cancels during it. A converted trial starts a monthly or annual subscription on
-  outcome_at; a canceled trial leaves the user on the free plan.
+  outcome_at; a canceled trial leaves the user on a free plan starting at ends_at.
 
 fields:
   - name: trial_id
@@ -43,8 +43,8 @@ fields:
 relationships:
   - field: user_id
     references: public.users.user_id
-    relationship_type: many_to_one
-    description: The user on the trial, for breakdowns by country or device_type.
+    relationship_type: one_to_one
+    description: One trial per user (true in the data, not enforced by the schema), so the join never duplicates rows. Use it for breakdowns by country or device_type.
 
 measures:
   - name: matured_trials

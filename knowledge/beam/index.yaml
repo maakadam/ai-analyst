@@ -33,7 +33,7 @@ tables:
   golden_queries: [monthly_paid_churn_rate, paid_churn_rate_by_country]
 - table: public.trials
   file: trials.yaml
-  description: One row per 14-day full-access trial. Use it for trials, trial outcomes and trial-to-paid conversion. Trials launched on 2026-08-01, so there is no trial data before then. A trial converts to a paid plan automatically at ends_at unless the user cancels during it. A converted trial starts a monthly or annual subscription on outcome_at; a canceled trial leaves the user on the free plan.
+  description: One row per 14-day full-access trial. Use it for trials, trial outcomes and trial-to-paid conversion. Trials launched on 2026-08-01, so there is no trial data before then. A trial converts to a paid plan automatically at ends_at unless the user cancels during it. A converted trial starts a monthly or annual subscription on outcome_at; a canceled trial leaves the user on a free plan starting at ends_at.
   measures: [matured_trials, converted_trials]
   golden_queries: [weekly_trial_conversion_rate]
 - table: public.users
@@ -46,4 +46,4 @@ tables:
 joins:
 - public.payments.subscription_id → public.subscriptions.subscription_id (many_to_one)
 - public.subscriptions.user_id → public.users.user_id (one_to_one)
-- public.trials.user_id → public.users.user_id (many_to_one)
+- public.trials.user_id → public.users.user_id (one_to_one)
