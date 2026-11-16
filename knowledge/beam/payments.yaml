@@ -1,0 +1,84 @@
+table: public.payments
+description: >
+  One row per payment transaction on a subscription. Use it for revenue, paying
+  subscriptions, prices and payment methods.
+
+fields:
+  - name: payment_id
+    type: integer
+    description: Unique identifier for the payment.
+    role: entity
+
+  - name: subscription_id
+    type: integer
+    description: The subscription that was charged. Joins to public.subscriptions.subscription_id.
+    role: relationship
+
+  - name: payment_date
+    type: timestamp
+    description: Date and time when the payment was made.
+    role: dimension
+
+  - name: amount_usd
+    type: numeric
+    description: The amount charged, in US dollars. Monthly is $10 for charges before 2026-03-01 and $12 from then on; annual is always $100.
+    role: measure
+
+  - name: method
+    type: text
+    description: The payment method used. One of card, paypal, apple_pay or google_pay.
+    role: dimension
+
+relationships:
+  - field: subscription_id
+    references: public.subscriptions.subscription_id
+    relationship_type: many_to_one
+    description: >
+      A subscription has many payments, so joining repeats the subscription once per payment:
+      aggregate payments first or count DISTINCT subscription_id. Payments have no user_id;
+      reach public.users through public.subscriptions.
+
+measures:
+  - name: revenue_usd
+    formula: SUM(amount_usd) FILTER (WHERE payment_date >= period_start AND payment_date < period_end)
+    description: Cash collected in the period. Annual plans count in full when charged, not spread over the year.
+
+  - name: paying_subscriptions
+    formula: COUNT(DISTINCT subscription_id) FILTER (WHERE payment_date >= period_start AND payment_date < period_end)
+    description: Subscriptions with at least one payment in the period. Some monthly subscriptions are charged twice in a month, so always count distinct subscription_id, never payment rows.
+
+golden_queries:
+  - name: monthly_revenue_by_plan
+    description: Revenue and paying subscriptions per month and plan, January to August 2026
+    sql: |
+      SELECT DATE_TRUNC('month', p.payment_date)::date AS payment_month,
+             s.plan,
+             COUNT(DISTINCT p.subscription_id) AS paying_subscriptions,
+             SUM(p.amount_usd) AS revenue_usd
+      FROM public.payments p
+      JOIN public.subscriptions s ON s.subscription_id = p.subscription_id
+      WHERE p.payment_date >= DATE '2026-01-01'
+        AND p.payment_date <  DATE '2026-09-01'
+      GROUP BY 1, 2
+      ORDER BY 1, 2;
+
+  - name: monthly_revenue_by_method
+    description: >
+      Revenue and paying subscriptions per month and payment method, January to August 2026.
+      A subscription can pay with more than one method in a month, so paying_subscriptions
+      summed over methods exceeds the month's total; count the total separately.
+    sql: |
+      SELECT DATE_TRUNC('month', payment_date)::date AS payment_month,
+             method,
+             COUNT(DISTINCT subscription_id) AS paying_subscriptions,
+             SUM(amount_usd) AS revenue_usd
+      FROM public.payments
+      WHERE payment_date >= DATE '2026-01-01'
+        AND payment_date <  DATE '2026-09-01'
+      GROUP BY 1, 2
+      ORDER BY 1, 2;
+
+notes:
+  - Monthly revenue jumps in March 2026 because of the price rise from $10 to $12, not because of more subscribers.
+  - A few paid subscriptions started from 2025 on have no payments at all; unexplained.
+  - Annual plans are charged $100 up front, so annual revenue arrives in lumps rather than spread over the year.

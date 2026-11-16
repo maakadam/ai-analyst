@@ -40,4 +40,7 @@ Why the skills work the way they do. The goal is a general analyst assistant for
 - **A brief is evidence from its run.** Once a run is finished its brief is not edited by hand; a change goes through a new run, so the brief always matches the frame, script and review it came from.
 
 ## Repo
+- **One source of truth per table.** Each table is described only in its `knowledge/beam/<table>.yaml`; the `.md` table notes were folded in and removed.
+- **`index.yaml` is generated.** `helpers/build_index.py` builds it from the table files and `_index_header.yaml`, so it never drifts; edit those, never the index.
+- **The index rebuilds itself.** A hook in `.claude/settings.json` reruns the builder after any edit to a `.yaml` file in `knowledge/beam/`, so no one has to remember.
 - **`outputs/` is gitignored**, so runs stay local by default. One run is force-added as a worked example; an earlier run of the same question is kept on the `archive/march-price-retention-v1` branch rather than on main, so main holds one answer per question.
