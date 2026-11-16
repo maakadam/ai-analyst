@@ -1,0 +1,52 @@
+table: public.users
+description: One row per Beam user account. Use it for signups, and to break any metric down by region (country) or signup device.
+
+fields:
+  - name: user_id
+    type: integer
+    description: Unique identifier for the user.
+    role: entity
+
+  - name: signup_date
+    type: timestamp
+    description: Date and time when the user created their account.
+    role: dimension
+
+  - name: country
+    type: text
+    description: >
+      The user's region at signup, from IP geolocation. One of US, EU, India or Rest
+      (all other countries). Despite the name it is a region, so questions about a single
+      country such as Germany can't be answered.
+    role: dimension
+
+  - name: device_type
+    type: text
+    description: The device used to sign up. One of iOS, Android or Web.
+    role: dimension
+
+measures:
+  - name: signups
+    formula: COUNT(user_id) FILTER (WHERE signup_date >= period_start AND signup_date < period_end)
+    description: New user accounts created in the period.
+
+derived_dimensions:
+  - name: signup_month
+    description: The calendar month the account was created, used for signup cohorts.
+    formula: DATE_TRUNC('month', signup_date)::date
+
+golden_queries:
+  - name: monthly_signups_by_country
+    description: New user accounts (signups) per month and country, January to August 2026
+    sql: |
+      SELECT DATE_TRUNC('month', signup_date)::date AS signup_month,
+             country,
+             COUNT(user_id) AS signups
+      FROM public.users
+      WHERE signup_date >= DATE '2026-01-01'
+        AND signup_date <  DATE '2026-09-01'
+      GROUP BY 1, 2
+      ORDER BY 1, 2;
+
+notes:
+  - September 2025 has a one-off signup spike, and signups rise from August 2026 when trials launched.

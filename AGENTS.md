@@ -11,8 +11,8 @@ A data analyst that runs inside Claude Code on Beam's data. Beam is a media app 
 ## Where things live
 ```
 data/                    Beam CSV exports; never modified
-knowledge/beam/          one note per table, quirks.md, corrections.md
-helpers/                 profile, checks, charts; the arithmetic runs here
+knowledge/beam/          one YAML per table, index.yaml, quirks.md, corrections.md
+helpers/                 profile, checks, charts, build_index; the arithmetic runs here
 outputs/<date>_<slug>/   one folder per question:
                          frame.md, analysis.py, data/, charts/, review.md, brief.md
 .claude/skills/          analyst, frame, profile, analyse, validate, deliver
@@ -25,5 +25,7 @@ outputs/<date>_<slug>/   one folder per question:
 - Name run folders with the real date from `date +%F` (YYYY-MM-DD).
 - The data ends on 2026-09-24. Treat that as "today" inside every analysis, never the real date.
 - No em dashes in anything written for a reader.
-- Read `knowledge/beam/` (table notes, `quirks.md`, `corrections.md`) before touching data; when the user corrects you, append one dated line to `corrections.md` and continue.
+- Before touching data, read `knowledge/beam/index.yaml`, then the YAML of each table in play in full, then `quirks.md` and `corrections.md`.
+- A new fact about one table goes in its YAML: in the field's description if it changes how SQL is written, otherwise in `notes`. Only facts that span tables or are about reading results go in `quirks.md`. One home per fact.
+- When the user corrects you, append one dated line to `corrections.md` and continue.
 - Before changing anything in `.claude/skills/` or `helpers/`, read `DECISIONS.md` and `TODO.md`; when a change sets or drops a rule, add or update one line in `DECISIONS.md`.

@@ -1,0 +1,73 @@
+table: public.trials
+description: >
+  One row per 14-day full-access trial. Use it for trials, trial outcomes and
+  trial-to-paid conversion. Trials launched on 2026-08-01, so there is no trial data
+  before then. A trial converts to a paid plan automatically at ends_at unless the
+  user cancels during it. A converted trial starts a monthly or annual subscription on
+  outcome_at; a canceled trial leaves the user on a free plan starting at ends_at.
+
+fields:
+  - name: trial_id
+    type: integer
+    description: Unique identifier for the trial.
+    role: entity
+
+  - name: user_id
+    type: integer
+    description: The user on the trial. Joins to public.users.user_id.
+    role: relationship
+
+  - name: started_at
+    type: timestamp
+    description: Date and time when the trial started.
+    role: dimension
+
+  - name: ends_at
+    type: timestamp
+    description: Date and time when the trial ends, 14 days after started_at. The trial converts to paid at this moment unless canceled first.
+    role: dimension
+
+  - name: outcome
+    type: text
+    description: >
+      How the trial ended. One of converted (became paid at ends_at) or canceled (canceled
+      during the trial). Empty while the trial is still running; an empty outcome is not a
+      failure, so never count it as canceled.
+    role: dimension
+
+  - name: outcome_at
+    type: timestamp
+    description: When the outcome happened. Empty while the trial is still running.
+    role: dimension
+
+relationships:
+  - field: user_id
+    references: public.users.user_id
+    relationship_type: one_to_one
+    description: One trial per user (true in the data, not enforced by the schema), so the join never duplicates rows. Use it for breakdowns by country or device_type.
+
+measures:
+  - name: matured_trials
+    formula: COUNT(trial_id) FILTER (WHERE ends_at < analysis_date + INTERVAL '1 day' AND started_at >= period_start AND started_at < period_end)
+    description: >
+      Trials started in the period that had reached ends_at by the analysis date, so their
+      outcome is final. Use this as the denominator of the conversion rate. Don't use all
+      trials with an outcome: cancellations are known before conversions, so including
+      still-running trials pulls the rate down.
+
+  - name: converted_trials
+    formula: COUNT(trial_id) FILTER (WHERE outcome = 'converted' AND ends_at < analysis_date + INTERVAL '1 day' AND started_at >= period_start AND started_at < period_end)
+    description: Matured trials that converted to a paid plan. The trial conversion rate is converted_trials / matured_trials.
+
+golden_queries:
+  - name: weekly_trial_conversion_rate
+    description: Trial-to-paid conversion rate by the week the trial started, counting only trials that had ended by the analysis date (2026-09-24)
+    sql: |
+      SELECT DATE_TRUNC('week', started_at)::date AS trial_week,
+             COUNT(*) AS matured_trials,
+             COUNT(*) FILTER (WHERE outcome = 'converted') AS converted_trials,
+             ROUND(COUNT(*) FILTER (WHERE outcome = 'converted')::numeric / COUNT(*), 4) AS conversion_rate
+      FROM public.trials
+      WHERE ends_at < DATE '2026-09-25'
+      GROUP BY 1
+      ORDER BY 1;

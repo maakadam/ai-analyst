@@ -1,0 +1,131 @@
+table: public.payments
+description: >
+  One row per payment transaction on a subscription. Use it for revenue, paying
+  subscriptions, prices and payment methods.
+
+fields:
+  - name: payment_id
+    type: integer
+    description: Unique identifier for the payment.
+    role: entity
+
+  - name: subscription_id
+    type: integer
+    description: The subscription that was charged. Joins to public.subscriptions.subscription_id.
+    role: relationship
+
+  - name: payment_date
+    type: timestamp
+    description: Date and time when the payment was made.
+    role: dimension
+
+  - name: amount_usd
+    type: numeric
+    description: The amount charged, in US dollars. Monthly is $10 for charges before 2026-03-01 and $12 from then on; annual is always $100.
+    role: measure
+
+  - name: method
+    type: text
+    description: The payment method used. One of card, paypal, apple_pay or google_pay.
+    role: dimension
+
+relationships:
+  - field: subscription_id
+    references: public.subscriptions.subscription_id
+    relationship_type: many_to_one
+    description: >
+      A subscription has many payments, so joining repeats the subscription once per payment:
+      aggregate payments first or count DISTINCT subscription_id. Payments have no user_id;
+      reach public.users through public.subscriptions.
+
+measures:
+  - name: revenue_usd
+    formula: SUM(amount_usd) FILTER (WHERE payment_date >= period_start AND payment_date < period_end)
+    description: Cash collected in the period. Annual plans count in full when charged, not spread over the year.
+
+  - name: paying_subscriptions
+    formula: COUNT(DISTINCT subscription_id) FILTER (WHERE payment_date >= period_start AND payment_date < period_end)
+    description: Subscriptions with at least one payment in the period. Some monthly subscriptions are charged twice in a month, so always count distinct subscription_id, never payment rows.
+
+  - name: monthly_renewals_due
+    formula: COUNT(*) FILTER (WHERE plan = 'monthly' AND renewal_due_date >= period_start AND renewal_due_date < LEAST(period_end, analysis_date + INTERVAL '1 day'))
+    description: >
+      Monthly renewals that fell due in the period, up to the analysis date; a renewal due
+      later is not decided yet. plan comes from public.subscriptions.
+
+  - name: missed_monthly_renewals
+    formula: COUNT(*) FILTER (WHERE plan = 'monthly' AND next_payment_date IS NULL AND renewal_due_date >= period_start AND renewal_due_date < LEAST(period_end, analysis_date + INTERVAL '1 day'))
+    description: >
+      Monthly renewals due in the period with no charge on them: the subscriber churned at
+      that renewal. Monthly churn rate = missed_monthly_renewals / monthly_renewals_due.
+      This is the churn measure for monthly plans: no subscription pays after its end_date,
+      and it doesn't depend on how end_date was recorded, which changed in October 2025.
+
+derived_dimensions:
+  - name: renewal_due_date
+    description: >
+      When the renewal after a monthly charge falls due. Monthly plans are charged exactly
+      every 30 days and no charge ever comes late, so a renewal without a charge is churn.
+    formula: payment_date + INTERVAL '30 days'
+
+  - name: next_payment_date
+    description: >
+      The subscription's next charge after this one; empty if it never paid again.
+      Compute it over all of the subscription's payments before filtering by date.
+    formula: LEAD(payment_date) OVER (PARTITION BY subscription_id ORDER BY payment_date)
+
+golden_queries:
+  - name: monthly_revenue_by_plan
+    description: Revenue and paying subscriptions per month and plan, January to August 2026
+    sql: |
+      SELECT DATE_TRUNC('month', p.payment_date)::date AS payment_month,
+             s.plan,
+             COUNT(DISTINCT p.subscription_id) AS paying_subscriptions,
+             SUM(p.amount_usd) AS revenue_usd
+      FROM public.payments p
+      JOIN public.subscriptions s ON s.subscription_id = p.subscription_id
+      WHERE p.payment_date >= DATE '2026-01-01'
+        AND p.payment_date <  DATE '2026-09-01'
+      GROUP BY 1, 2
+      ORDER BY 1, 2;
+
+  - name: monthly_revenue_by_method
+    description: >
+      Revenue and paying subscriptions per month and payment method, January to August 2026.
+      A subscription can pay with more than one method in a month, so paying_subscriptions
+      summed over methods exceeds the month's total; count the total separately.
+    sql: |
+      SELECT DATE_TRUNC('month', payment_date)::date AS payment_month,
+             method,
+             COUNT(DISTINCT subscription_id) AS paying_subscriptions,
+             SUM(amount_usd) AS revenue_usd
+      FROM public.payments
+      WHERE payment_date >= DATE '2026-01-01'
+        AND payment_date <  DATE '2026-09-01'
+      GROUP BY 1, 2
+      ORDER BY 1, 2;
+
+  - name: monthly_renewal_churn_rate
+    description: Monthly-plan churn rate by the month renewals fell due, January to August 2026
+    sql: |
+      WITH r AS (
+        SELECT p.payment_date + INTERVAL '30 days' AS renewal_due_date,
+               LEAD(p.payment_date) OVER (PARTITION BY p.subscription_id ORDER BY p.payment_date) AS next_payment_date
+        FROM public.payments p
+        JOIN public.subscriptions s USING (subscription_id)
+        WHERE s.plan = 'monthly'
+      )
+      SELECT DATE_TRUNC('month', renewal_due_date)::date AS due_month,
+             COUNT(*) AS renewals_due,
+             COUNT(*) FILTER (WHERE next_payment_date IS NULL) AS missed_renewals,
+             ROUND(COUNT(*) FILTER (WHERE next_payment_date IS NULL)::numeric / COUNT(*), 4) AS churn_rate
+      FROM r
+      WHERE renewal_due_date >= DATE '2026-01-01'
+        AND renewal_due_date <  DATE '2026-09-01'
+      GROUP BY 1
+      ORDER BY 1;
+
+notes:
+  - Monthly revenue jumps in March 2026 because of the price rise from $10 to $12, not because of more subscribers.
+  - 235 paid subscriptions from the 2025-09-17 block have no payments; unexplained, so say so whenever they enter a count. Paid subscriptions that start after the analysis date have no payments yet.
+  - Annual plans are charged $100 up front, so annual revenue arrives in lumps rather than spread over the year.

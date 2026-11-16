@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if python -c \"import json,sys,pathlib; p=pathlib.PurePath(json.load(sys.stdin).get('tool_input',{}).get('file_path','')); sys.exit(0 if p.suffix=='.yaml' and [x.lower() for x in p.parts[-3:-1]]==['knowledge','beam'] else 1)\"; then cd \"$CLAUDE_PROJECT_DIR\" && poetry run python helpers/build_index.py; fi",
+            "timeout": 60,
+            "statusMessage": "Rebuilding knowledge/beam/index.yaml"
+          }
+        ]
+      }
+    ]
+  }
+}
