@@ -19,7 +19,7 @@ fields:
 
   - name: started_at
     type: timestamp
-    description: Date and time when the trial started.
+    description: Date and time when the trial started. Event date, so it can set the analysis date.
     role: dimension
 
   - name: ends_at

@@ -14,7 +14,7 @@ data/                    Beam CSV exports; never modified
 knowledge/beam/          one YAML per table, index.yaml, quirks.md, corrections.md
 helpers/                 profile, checks, charts, build_index; the arithmetic runs here
 outputs/<date>_<slug>/   one folder per question:
-                         frame.md, analysis.py, data/, charts/, review.md, brief.md
+                         frame.md, sql/, data/, analysis.py, charts/, review.md, brief.md
 .claude/skills/          analyst, frame, profile, analyse, validate, deliver
 ```
 
@@ -24,7 +24,7 @@ outputs/<date>_<slug>/   one folder per question:
 - In SQL, name every column; never `SELECT *`. When exploring, filter to a small slice first, such as the latest date or one month.
 - Never modify anything in `data/`.
 - Name run folders with the real date from `date +%F` (YYYY-MM-DD).
-- The data ends on 2026-09-24. Treat that as "today" inside every analysis, never the real date.
+- Treat the analysis date, looked up as `knowledge/beam/index.yaml` says, as "today" inside every analysis, never the real date.
 - No em dashes in anything written for a reader.
 - Before touching data, read `knowledge/beam/index.yaml`, then the YAML of each table in play in full, then `quirks.md` and `corrections.md`.
 - A new fact about one table goes in its YAML: in the field's description if it changes how SQL is written, otherwise in `notes`. Only facts that span tables or are about reading results go in `quirks.md`. One home per fact.

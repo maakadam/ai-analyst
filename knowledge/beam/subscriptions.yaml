@@ -25,7 +25,8 @@ fields:
     type: timestamp
     description: >
       Date and time when the subscription started. A start after the analysis date hasn't
-      happened yet, so leave those subscriptions out of every count.
+      happened yet, so leave those subscriptions out of every count. It holds scheduled
+      starts, so it never sets the analysis date.
     role: dimension
 
   - name: end_date

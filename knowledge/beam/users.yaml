@@ -9,7 +9,7 @@ fields:
 
   - name: signup_date
     type: timestamp
-    description: Date and time when the user created their account.
+    description: Date and time when the user created their account. Event date, so it can set the analysis date.
     role: dimension
 
   - name: country

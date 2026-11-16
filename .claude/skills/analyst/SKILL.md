@@ -14,12 +14,12 @@ If the question above is empty, ask for the question and stop. Never invent one.
 Every step below follows these rules.
 
 1. **Frame the decision before touching data.** If the question does not say what decision it informs and who decides, ask; never reconstruct it.
-2. **Never answer a table question from the schema alone.** Profile first; a table without a note in `knowledge/beam/` gets one before it is used.
+2. **Never answer a table question from the schema alone.** A table without a YAML in `knowledge/beam/` is profiled before it is used.
 3. **A naked number is not a finding.** Every number carries a comparison (prior period, segment or benchmark) or says none is available; percentage points and relative percent are named.
-4. **Cite the table, the filter and the code.** Every number in a brief traces to `analysis.py` and a result table in the run folder.
-5. **Parts sum to totals and joins do not fan out.** The checks in `helpers/checks.py` run in code, not in prose.
+4. **Cite the query, the table and the code.** Every number in a brief traces to a saved `sql/` query, a result table and, where pandas changed it, `analysis.py`.
+5. **Parts sum to totals and joins do not fan out.** Checks run as saved SQL and code, not in prose.
 6. **Say what was not checked.** Open periods, unmatured trials and untested assumptions are part of the answer.
-7. **Read the knowledge folder before writing code, and write back what you learn.** Read `knowledge/beam/` (table notes, `quirks.md`, `corrections.md`) first; when the user corrects you, append the correction to `corrections.md` as one dated line and continue.
+7. **Read the knowledge folder before writing code, and write back what you learn.** Read `knowledge/beam/` (`index.yaml`, the table YAMLs, `quirks.md`, `corrections.md`) first; when the user corrects you, append the correction to `corrections.md` as one dated line and continue.
 
 ## The steps
 

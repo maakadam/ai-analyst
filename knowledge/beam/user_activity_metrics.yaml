@@ -8,7 +8,7 @@ description: >
 fields:
   - name: date
     type: date
-    description: The day the counts end on. One row per day, no gaps.
+    description: The day the counts end on. One row per day, no gaps. Event date, so it can set the analysis date.
     role: dimension
 
   - name: dau

@@ -26,7 +26,8 @@ fields:
       sessions on one day. Sessions on a signup or trial start day sit before the exact
       signup time, so compare with users.signup_date and trials.started_at on dates, not
       timestamps. The 273 sessions dated 2026-09-25 and 2026-09-26 all belong to trial
-      users who signed up in the last days of data; leave them out.
+      users who signed up in the last days of data; leave them out. Because it runs past
+      the other tables, it never sets the analysis date.
     role: dimension
 
   - name: duration_minutes

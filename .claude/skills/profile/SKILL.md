@@ -41,7 +41,7 @@ Your job is to test what the YAML and the database comments say against the data
 
 1. Propose a change only where the data disagrees with the YAML, or the YAML lacks a fact that changes how SQL is written.
 2. No profiling statistics in the YAML: a count goes in only when it is the fact itself.
-3. A table with no YAML gets a full draft in the shape of the others.
+3. A table with no YAML gets a full draft in the shape of the others. Ask whether each date column records events; mark those "Event date, so it can set the analysis date."
 4. If the table can't be trusted (it disagrees with its sources, or nothing explains it), propose adding it to `excluded` in `knowledge/beam/_index_header.yaml` with a one-line reason, instead of a YAML.
 5. Show each change as the exact text, in the YAML or `quirks.md` as AGENTS.md says, and ask with AskUserQuestion. Apply only on a yes.
 
