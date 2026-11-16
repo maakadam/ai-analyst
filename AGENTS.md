@@ -10,9 +10,8 @@ A data analyst that runs inside Claude Code on Beam's data. Beam is a media app 
 
 ## Where things live
 ```
-data/                    Beam CSV exports; never modified
 knowledge/beam/          one YAML per table, index.yaml, quirks.md, corrections.md
-helpers/                 profile, checks, charts, compare, build_index, check_credentials
+helpers/                 checks, charts, compare, build_index, check_credentials
 outputs/<date>_<slug>/   one folder per question:
                          frame.md, sql/, data/, analysis.py, charts/, review.md, brief.md
 .claude/skills/          analyst, frame, profile, analyse, validate, deliver
@@ -22,7 +21,7 @@ outputs/<date>_<slug>/   one folder per question:
 - Run Python with `poetry run python ...` from the repo root.
 - Never print raw rows into the conversation; aggregates only.
 - In SQL, name every column; never `SELECT *`. When exploring, filter to a small slice first, such as the latest date or one month.
-- Never modify anything in `data/`.
+- Beam's data lives only in the database, reached through `course-db`; it is read-only, so never try to write to it.
 - Name run folders with the real date from `date +%F` (YYYY-MM-DD).
 - Treat the analysis date, looked up as `knowledge/beam/index.yaml` says, as "today" inside every analysis, never the real date.
 - No em dashes in anything written for a reader.
