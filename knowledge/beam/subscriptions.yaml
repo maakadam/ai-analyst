@@ -2,7 +2,8 @@ table: public.subscriptions
 description: >
   One row per user's subscription (one per user, so plan switches are not visible).
   Use it for plans, active subscriptions, churn and churn rate, and tenure bands.
-  Churn is always read from end_date, never from status.
+  Read monthly churn from missed renewals in public.payments (missed_monthly_renewals),
+  annual churn from end_date, never from status.
 
 fields:
   - name: subscription_id
@@ -32,7 +33,10 @@ fields:
     description: >
       Date when the subscription ended or is scheduled to end. Empty means the subscription
       is active. A date after the analysis date is a scheduled cancellation, and that
-      subscription is still active today. This is the field to read churn from.
+      subscription is still active today. Monthly end dates are midnight and exactly 30 days
+      after the last charge until September 2025; from October 2025 they fall anywhere from 1
+      to over 31 days after it, so don't time monthly churn by end_date. Annual churn is read
+      from this field.
     role: dimension
 
   - name: status
@@ -61,6 +65,7 @@ measures:
       Paid subscriptions active at the start of the period whose end_date falls in the period,
       up to the analysis date; later end dates are scheduled cancellations, still active.
       Churn rates use paid plans only, dividing by paid subscriptions active at the start of the period.
+      Use it for annual plans; for monthly plans use missed_monthly_renewals in public.payments.
 
 derived_dimensions:
   - name: tenure_band
@@ -117,4 +122,3 @@ golden_queries:
 
 notes:
   - Bulk start days are blocks, not organic signups; say so whenever one enters a comparison. 2025-09-17 (the September 2025 signup spike, 1,385 paid), 2026-07-30 (403 paid) and 2026-09-25 (582 paid, after the analysis date, none from trials).
-  - Monthly end dates were recorded differently from October 2025, so churn compared across that month isn't like for like.

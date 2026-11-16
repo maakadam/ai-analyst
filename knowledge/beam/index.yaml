@@ -23,11 +23,12 @@ tables:
 - table: public.payments
   file: payments.yaml
   description: One row per payment transaction on a subscription. Use it for revenue, paying subscriptions, prices and payment methods.
-  measures: [revenue_usd, paying_subscriptions]
-  golden_queries: [monthly_revenue_by_plan, monthly_revenue_by_method]
+  measures: [revenue_usd, paying_subscriptions, monthly_renewals_due, missed_monthly_renewals]
+  derived_dimensions: [renewal_due_date, next_payment_date]
+  golden_queries: [monthly_revenue_by_plan, monthly_revenue_by_method, monthly_renewal_churn_rate]
 - table: public.subscriptions
   file: subscriptions.yaml
-  description: One row per user's subscription (one per user, so plan switches are not visible). Use it for plans, active subscriptions, churn and churn rate, and tenure bands. Churn is always read from end_date, never from status.
+  description: One row per user's subscription (one per user, so plan switches are not visible). Use it for plans, active subscriptions, churn and churn rate, and tenure bands. Read monthly churn from missed renewals in public.payments (missed_monthly_renewals), annual churn from end_date, never from status.
   measures: [paid_subscriptions_at_period_start, churned_subscriptions]
   derived_dimensions: [tenure_band]
   golden_queries: [monthly_paid_churn_rate, paid_churn_rate_by_country]
