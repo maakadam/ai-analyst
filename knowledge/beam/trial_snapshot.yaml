@@ -1,0 +1,103 @@
+table: ml.trial_snapshot
+description: >
+  One row per trial with its first three days of activity and whether it converted,
+  a training set for trial-conversion models. Versioned by snapshot_date and append-only;
+  it holds one snapshot today (2026-09-24, 1,516 trials started 2026-08-01 to 2026-09-09).
+  Read it through the view ml.trial_snapshot_latest, which keeps only the newest snapshot.
+  Use it for conversion by early activity, region or device. For anything past day 3,
+  or trials ending on the snapshot date, use public.trials and public.sessions.
+
+fields:
+  - name: trial_id
+    type: integer
+    description: The trial. Joins to public.trials.trial_id; unique within a snapshot.
+    role: relationship
+
+  - name: user_id
+    type: integer
+    description: The user on the trial. Joins to public.users.user_id.
+    role: relationship
+
+  - name: snapshot_date
+    type: date
+    description: >
+      The day the snapshot was built. A trial is in it only once it had ended before this
+      date (ends_at < snapshot_date), so trials ending on the snapshot date itself are left
+      out, unlike the matured_trials measure in public.trials.
+    role: dimension
+
+  - name: trial_started_at
+    type: date
+    description: The day the trial started, public.trials.started_at as a date.
+    role: dimension
+
+  - name: country
+    type: text
+    description: The user's region, copied from public.users.country (US, EU, India or Rest).
+    role: dimension
+
+  - name: device_type
+    type: text
+    description: The signup device, copied from public.users.device_type (iOS, Android or Web).
+    role: dimension
+
+  - name: sessions_day1
+    type: integer
+    description: Sessions on the trial start day. Day 1 is the calendar day of trial_started_at.
+    role: dimension
+
+  - name: sessions_day2
+    type: integer
+    description: Sessions on the day after the trial started.
+    role: dimension
+
+  - name: sessions_day3
+    type: integer
+    description: Sessions on the second day after the trial started.
+    role: dimension
+
+  - name: listen_sessions_3d
+    type: integer
+    description: Sessions with activity_type listen over days 1 to 3.
+    role: dimension
+
+  - name: total_minutes_3d
+    type: integer
+    description: Sum of duration_minutes over days 1 to 3; 0 when there were no sessions.
+    role: dimension
+
+  - name: converted
+    type: integer
+    description: 1 if the trial converted to a paid plan at its end, 0 if it was canceled during the trial. Never empty.
+    role: dimension
+
+relationships:
+  - field: trial_id
+    references: public.trials.trial_id
+    relationship_type: one_to_one
+    description: Every row is a trial in public.trials, with the same user, start day and outcome. Join only within one snapshot_date.
+
+measures:
+  - name: snapshot_trials
+    formula: COUNT(trial_id)
+    description: Trials in the snapshot. Read from ml.trial_snapshot_latest, or filter on one snapshot_date.
+
+  - name: snapshot_converted_trials
+    formula: SUM(converted)
+    description: Trials in the snapshot that converted. The conversion rate is snapshot_converted_trials / snapshot_trials, or AVG(converted).
+
+golden_queries:
+  - name: trial_conversion_by_device
+    description: Trials, conversions and conversion rate by signup device in the latest snapshot
+    sql: |
+      SELECT device_type,
+             COUNT(trial_id) AS trials,
+             SUM(converted) AS converted,
+             ROUND(AVG(converted), 4) AS conversion_rate
+      FROM ml.trial_snapshot_latest
+      GROUP BY 1
+      ORDER BY 1;
+
+notes:
+  - Checked 2026-11-16 against public.trials, public.users and public.sessions: every trial, outcome, region, device and day 1 to 3 count matches exactly.
+  - The database comment says to pull the view once and save it as a file; that is advice for model training. For analysis, query it through course-db like any table.
