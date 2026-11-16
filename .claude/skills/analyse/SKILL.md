@@ -58,10 +58,10 @@ Show the plan before running any query for it.
 
 ## Act 4: Query, save, then script
 
-1. One aggregate `execute_sql` per result table, starting from a golden query when one fits. Over about 200 rows means aggregate further or filter.
+1. One aggregate `execute_sql` per result table, starting from a golden query when one fits, always with an `ORDER BY`. Over about 200 rows means aggregate further or filter.
 2. Save each statement to `outputs/<run>/sql/<name>.sql` and its rows to `outputs/<run>/data/<name>.csv`, exactly as returned, header first, with the same name. Then check the CSV's row count and one column total against a `COUNT` and `SUM` over the same query.
 3. Each check is a small aggregate query saved the same way as `check_<name>`: rows before and after a join, the first and last dates at the edges, matured against all.
-4. Write `outputs/<run>/analysis.py`: it reads the CSVs with pandas, derives what SQL did not, saves any new table to `data/`, and prints each check. Use `helpers.checks.parts_sum_to_total` when segments should add back to a total.
+4. Write `outputs/<run>/analysis.py`: it finds its CSVs relative to its own folder, reads them with pandas, derives what SQL did not, saves any new table to `data/`, and prints each check. Use `helpers.checks.parts_sum_to_total` when segments should add back to a total.
 5. Make charts only through `helpers.charts`: `bar` or `line`, then `save` into `outputs/<run>/charts/<name>.png`. Every title states the takeaway the chart proves, not a label.
 6. Run it from the repo root with `poetry run python outputs/<run>/analysis.py`, and fix it until it runs clean. If a check fails, decide whether it changes the answer and fix the query or report it. If the data cannot answer the question, say so plainly and stop.
 

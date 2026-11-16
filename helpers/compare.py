@@ -6,6 +6,18 @@ from pathlib import Path
 import pandas as pd
 
 
+def _normalised(df: pd.DataFrame) -> pd.DataFrame:
+    """Write ISO dates one way and put rows in one order, so only real differences count."""
+    df = df.copy()
+    for col in df.select_dtypes("object").columns:
+        # "2025-01-01" and "2025-01-01T00:00:00Z" are the same date written two ways.
+        parsed = pd.to_datetime(df[col], format="ISO8601", utc=True, errors="coerce")
+        if df[col].notna().any() and parsed.notna().sum() == df[col].notna().sum():
+            df[col] = parsed.dt.strftime("%Y-%m-%dT%H:%M:%S")
+    # A query without ORDER BY may return the same rows in another order.
+    return df.sort_values(list(df.columns), na_position="last").reset_index(drop=True)
+
+
 def same_results(old_dir, new_dir, tolerance: float = 1e-9) -> dict:
     """Check that the CSVs in `new_dir` match those in `old_dir`.
 
@@ -21,7 +33,7 @@ def same_results(old_dir, new_dir, tolerance: float = 1e-9) -> dict:
         if not (old_dir / name).exists():
             files[name] = "new in the rerun"
             continue
-        a, b = pd.read_csv(old_dir / name), pd.read_csv(new_dir / name)
+        a, b = _normalised(pd.read_csv(old_dir / name)), _normalised(pd.read_csv(new_dir / name))
         if list(a.columns) != list(b.columns):
             files[name] = "columns differ"
         elif len(a) != len(b):

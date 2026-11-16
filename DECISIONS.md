@@ -34,7 +34,10 @@ Why the skills work the way they do. The goal is a general analyst assistant for
 - **Ranked and capped.** At most five findings that change the verdict, a claim or how sure the brief can be; the rest fold into one Note. A senior reviewer ranks, not lists.
 - **Checks that apply.** Targeting, money and projection checks run only when the decision targets groups, has a money side or rests on a projection, so a plain "what happened" question is not judged as a pricing decision.
 - **Learning across questions.** Validate proposes lasting source-data facts as quirk lines; the user decides whether they go into `quirks.md`, as with profile.
-- **`rerun/` is scratch.** The rerun copy duplicates the run's outputs and can be regenerated from `analysis.py`, so validate writes what it showed into `review.md` and deletes the folder before the run is committed.
+- **The rerun starts from the saved SQL.** Validate reruns each `sql/*.sql` through `course-db`, then a copy of `analysis.py` on those rows, and compares every CSV, so a query, a hand-copied row or the pandas step that no longer matches shows up. It reads AGENTS.md itself, since it runs in its own context.
+- **Compare what the rows say, not how they are written.** `helpers/compare.py` sorts rows and reads ISO dates one way before comparing, and saved queries always have an `ORDER BY`, so row order or a date format is never a false Fix first.
+- **Stability from aggregates.** `stable_over_time` takes one row per period (count, level, spread) from an aggregate query, so the source-data check never needs raw rows.
+- **`rerun/` is scratch.** The rerun copy duplicates the run's outputs and can be regenerated from the saved queries and `analysis.py`, so validate writes what it showed into `review.md` and deletes the folder before the run is committed.
 
 ## Deliver
 - **Built from the frame and the analysis; the review only gates it and sets its limits.** A brief built around the review lists every caveat and ends on "it depends".
