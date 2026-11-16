@@ -20,6 +20,9 @@ Why the skills work the way they do. The goal is a general analyst assistant for
 ## Profile
 - **Checks the YAML, doesn't write notes.** Profile tests the YAML and the database comments against aggregate SQL and proposes changes only where the data disagrees or SQL would be written differently, so each table keeps one source of truth. A table it can't trust is proposed for `excluded` instead.
 
+## Frame and Profile
+- **Frame picks from the index and names gaps.** Frame has no database access, so it proposes tables only from `index.yaml` and writes any data no listed table holds as a Gap line; Profile looks in the database for a table that fills it, so a new table enters through a YAML.
+
 ## Analyse
 - **Kept close to the course version**, plus one rule: every claim has a table. Validate and deliver only trust what is in a result CSV, so a check that lives in the conversation cannot reach the brief.
 - **SQL computes, Claude saves the rows, pandas does the rest.** A test showed a typical aggregate costs under 1,000 tokens through the MCP, so neither a query subagent nor a query helper earns its extra layer. Claude runs each `sql/<name>.sql` through `course-db` and saves its rows unchanged as `data/<name>.csv`; `analysis.py` only reads the CSVs, so Python needs no database access and validate can rerun each query and compare.
@@ -43,6 +46,7 @@ Why the skills work the way they do. The goal is a general analyst assistant for
 - **Built from the frame and the analysis; the review only gates it and sets its limits.** A brief built around the review lists every caveat and ends on "it depends".
 - **Two readers.** The body is for the decider in business words; codes, files and checks go in the appendix.
 - **Commit to a recommendation**, say how sure, and name what would change it. When cause is unclear, name the cheapest way to find out, such as a holdout or a small test.
+- **Sources cite the query.** Each finding's source is its `data/<name>.csv` and the `sql/` files it comes from, plus `analysis.py` when the pandas step made or changed it, so a reader can rerun exactly what the brief rests on.
 - **Size it in money** for the whole affected group, taken from a CSV, never worked out in the brief.
 - **Short body.** The body stays under about 400 words; the appendix lists only the review findings that changed the brief, and counts the rest.
 - **A brief is evidence from its run.** Once a run is finished its brief is not edited by hand; a change goes through a new run, so the brief always matches the frame, script and review it came from.

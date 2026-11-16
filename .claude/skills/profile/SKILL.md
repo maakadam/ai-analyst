@@ -20,7 +20,7 @@ Your job is to test what the YAML and the database comments say against the data
 
 ## Act 1: Find the table (the gate)
 
-1. Take the table as `schema.table`; a bare name means `public`.
+1. Take the table as `schema.table`; a bare name means `public`. Given a data need instead (a Gap line from a frame), look with `list_tables` for tables not in `knowledge/beam/index.yaml` that could hold it. Propose the best fit and continue with it, or say none exists and stop.
 2. Check it exists with `list_tables`. If not, name the tables that do and stop. Never guess a near match.
 3. If `knowledge/beam/index.yaml` lists it under `excluded`, give the reason and stop.
 
