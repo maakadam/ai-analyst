@@ -4,8 +4,8 @@ Why the skills work the way they do. The goal is a general analyst assistant for
 
 ## Across the chain
 - **Skills share only files.** Each step reads and writes the run folder and `knowledge/beam/`, nothing else, so any step can run on its own (`/validate` on an old run, `/deliver` on checked results).
-- **The model reasons, the code computes.** Every number comes from `analysis.py` and a result CSV, never from arithmetic in the conversation, so anyone can rerun it.
-- **Two dates.** Run folders use the real date; inside the analysis, "today" is the last day of data, so open months and unmatured trials are judged against the data, not the calendar.
+- **The model reasons, the code computes.** Every number comes from a saved query, a result CSV and, where pandas changed it, `analysis.py`, never from arithmetic in the conversation, so anyone can rerun it.
+- **Two dates.** Run folders use the real date; inside the analysis, "today" is the analysis date, looked up per run as the earliest last day of the event date columns in play, so open months and unmatured trials are judged against the data, not the calendar. Only columns marked as event dates count: scheduled dates and `sessions` (which runs two days long) would set it too late, and snapshot dates too early.
 - **General rules, not past answers.** Examples from trial runs were replaced with the rule they stood for, so the skills do not steer a new question toward an old answer.
 - **Less text.** Each skill opens with one failure story and keeps only rules that earn their place.
 
@@ -22,7 +22,8 @@ Why the skills work the way they do. The goal is a general analyst assistant for
 
 ## Analyse
 - **Kept close to the course version**, plus one rule: every claim has a table. Validate and deliver only trust what is in a result CSV, so a check that lives in the conversation cannot reach the brief.
-- **Explore with `execute_sql`, compute in `analysis.py`.** A test showed a typical aggregate costs under 1,000 tokens through the MCP, so neither a query subagent nor a query helper earns its extra layer. Numbers that count come from `analysis.py`, which queries the database and saves its CSVs, so the run stays rerunnable.
+- **SQL computes, Claude saves the rows, pandas does the rest.** A test showed a typical aggregate costs under 1,000 tokens through the MCP, so neither a query subagent nor a query helper earns its extra layer. Claude runs each `sql/<name>.sql` through `course-db` and saves its rows unchanged as `data/<name>.csv`; `analysis.py` only reads the CSVs, so Python needs no database access and validate can rerun each query and compare.
+- **Checks as SQL.** Checks that need raw rows (join fan-out, edge periods, matured windows) are small aggregate queries saved as `data/check_<name>.csv`; `helpers.checks` keeps only what runs on result tables.
 - **Tried and dropped: an "orient" step** (group sizes and base rates before the plan). It added length, and as its own skill it would apply the frame's filters separately and drift from the findings. Kept as an idea in `TODO.md`.
 
 ## Validate

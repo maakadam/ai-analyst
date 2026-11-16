@@ -16,7 +16,7 @@ fields:
 
   - name: payment_date
     type: timestamp
-    description: Date and time when the payment was made.
+    description: Date and time when the payment was made. Event date, so it can set the analysis date.
     role: dimension
 
   - name: amount_usd

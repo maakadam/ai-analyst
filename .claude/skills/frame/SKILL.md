@@ -69,7 +69,7 @@ Framed: <the question after framing, in clean wording>
 
 ## Act 2: Gather knowledge
 
-1. Read the analysis date from AGENTS.md. Never use the real date as the analysis date.
+1. The analysis date is looked up in Analyse, as `knowledge/beam/index.yaml` says. Never use the real date as the analysis date.
 2. List the files in `data/`; each `data/<name>.csv` is the table `<name>`.
 3. Read `knowledge/beam/quirks.md`, `knowledge/beam/corrections.md` and every `knowledge/beam/<table>.md` that exists.
 4. Pick the tables likely involved, each with a one-line reason. Note which ones have no note yet.

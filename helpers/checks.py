@@ -1,4 +1,7 @@
-"""Sanity checks for analysis results. Each returns ok, a summary and its numbers."""
+"""Sanity checks that run in pandas on result tables. Each returns ok, a summary and its numbers.
+
+Checks that need raw rows (join fan-out, edge periods, matured windows) run as SQL instead,
+saved as data/check_<name>.csv in the run folder."""
 
 from collections.abc import Iterable
 
@@ -27,89 +30,6 @@ def parts_sum_to_total(
         "total": total,
         "relative_difference": rel_diff,
         "tolerance": tolerance,
-    }
-
-
-def join_fan_out(
-    left: pd.DataFrame, right: pd.DataFrame, on: str | list[str]
-) -> dict:
-    """Check whether joining `right` onto `left` multiplies rows.
-
-    Use it before trusting any join; a fan-out silently inflates sums and counts.
-    """
-    rows_before = len(left)
-    rows_after = len(left.merge(right, on=on, how="inner"))
-    duplicate_keys = int(right.duplicated(subset=on).sum())
-    ok = rows_after <= rows_before
-    if ok:
-        summary = f"The join kept {rows_after:,} of {rows_before:,} rows without fanning out."
-    else:
-        summary = (
-            f"The join grew {rows_before:,} rows to {rows_after:,} because the "
-            f"right table repeats {duplicate_keys:,} keys."
-        )
-    return {
-        "ok": ok,
-        "summary": summary,
-        "rows_before": rows_before,
-        "rows_after": rows_after,
-        "duplicate_keys_right": duplicate_keys,
-    }
-
-
-def date_boundaries(df: pd.DataFrame, col: str, freq: str = "M") -> dict:
-    """Check whether the first and last periods of a date column are only partly covered.
-
-    Use it before comparing periods, so a half month is not read as a drop.
-    """
-    dates = pd.to_datetime(df[col]).dropna()
-    # Normalise to midnight so a timestamp late on the last day still counts as
-    # covering that day when compared with the period's start and end.
-    min_day, max_day = dates.min().normalize(), dates.max().normalize()
-    first, last = min_day.to_period(freq), max_day.to_period(freq)
-    first_partial = min_day > first.start_time.normalize()
-    last_partial = max_day < last.end_time.normalize()
-
-    partial = []
-    if first_partial:
-        partial.append(f"the first period ({first}) starts on {min_day.date()}")
-    if last_partial:
-        partial.append(f"the last period ({last}) ends on {max_day.date()}")
-    if partial:
-        summary = f"Partial edges in {col}: " + " and ".join(partial) + "."
-    else:
-        summary = f"Both edge periods of {col} ({first} and {last}) are complete."
-
-    return {
-        "ok": not partial,
-        "summary": summary,
-        "first_period": str(first),
-        "last_period": str(last),
-        "first_partial": bool(first_partial),
-        "last_partial": bool(last_partial),
-        "min_date": min_day.date().isoformat(),
-        "max_date": max_day.date().isoformat(),
-    }
-
-
-def matured_only(df: pd.DataFrame, end_col: str, as_of=None) -> dict:
-    """Return only the rows whose window has closed by `as_of` (today by default).
-
-    Use it for trials or periods still running, whose outcome is not known yet.
-    """
-    as_of = pd.Timestamp(as_of) if as_of is not None else pd.Timestamp.today()
-    ends = pd.to_datetime(df[end_col])
-    kept = df[ends <= as_of]
-    dropped = len(df) - len(kept)
-    return {
-        "ok": dropped == 0,
-        "summary": (
-            f"Excluded {dropped:,} of {len(df):,} rows because their window "
-            f"has not closed by {as_of.date()}."
-        ),
-        "kept": kept,
-        "dropped": dropped,
-        "as_of": as_of.date().isoformat(),
     }
 
 
@@ -213,9 +133,3 @@ def stable_over_time(
         "tolerance": tolerance,
     }
 
-
-if __name__ == "__main__":
-    subscriptions = pd.read_csv("data/subscriptions.csv", parse_dates=["start_date"])
-    result = date_boundaries(subscriptions, "start_date")
-    for key, value in result.items():
-        print(f"{key}: {value}")

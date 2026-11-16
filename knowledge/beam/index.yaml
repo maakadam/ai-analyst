@@ -7,8 +7,8 @@ sql_dialect: PostgreSQL
 conventions:
   - Write table names with their schema, for example public.subscriptions.
   - period_start (inclusive) and period_end (exclusive) in formulas are filled in by each query.
-  - analysis_date in formulas is DATE '2026-09-24', the last day of data. Read "today", "current" and "last month" relative to it; don't use CURRENT_DATE or now().
-  - The last complete month is August 2026; September 2026 is partial (to the 24th).
+  - analysis_date in formulas is looked up once per run: the earliest MAX(column)::date of the event date columns (fields whose description says "Event date") of the tables in play, or MAX(public.payments.payment_date)::date when none is in play. It is a date, never a timestamp. Read "today", "current" and "last month" relative to it; don't use CURRENT_DATE or now().
+  - The month holding analysis_date is partial; the month before it is the last complete one.
   - Use the defined measures, derived dimensions and joins; don't invent your own.
   - Start from a golden query when one answers the question or a close variant of it.
 
