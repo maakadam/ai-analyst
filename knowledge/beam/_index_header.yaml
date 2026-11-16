@@ -11,7 +11,6 @@ conventions:
   - Start from a golden query when one answers the question or a close variant of it.
 
 not_yet_covered:   # say a question isn't covered rather than guess
-  - public.sessions
   - marts.user_activity_metrics
   - marts.user_revenue_summary
   - ml.churn_snapshot
