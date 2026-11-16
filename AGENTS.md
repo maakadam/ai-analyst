@@ -21,6 +21,7 @@ outputs/<date>_<slug>/   one folder per question:
 ## Conventions
 - Run Python with `poetry run python ...` from the repo root.
 - Never print raw rows into the conversation; aggregates only.
+- In SQL, name every column; never `SELECT *`. When exploring, filter to a small slice first, such as the latest date or one month.
 - Never modify anything in `data/`.
 - Name run folders with the real date from `date +%F` (YYYY-MM-DD).
 - The data ends on 2026-09-24. Treat that as "today" inside every analysis, never the real date.
