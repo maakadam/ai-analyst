@@ -21,6 +21,7 @@ Why the skills work the way they do. The goal is a general analyst assistant for
 - **Checks the YAML, doesn't write notes.** Profile tests the YAML and the database comments against aggregate SQL and proposes changes only where the data disagrees or SQL would be written differently, so each table keeps one source of truth. A table it can't trust is proposed for `excluded` instead.
 
 ## Frame and Profile
+- **A rerun keeps its slug.** Frame checks the run folders on `main` and asks whether the question is a rerun; on yes it reuses the slug, so publishing replaces the old run and `main` keeps one answer per question.
 - **Frame picks from the index and names gaps.** Frame has no database access, so it proposes tables only from `index.yaml` and writes any data no listed table holds as a Gap line; Profile looks in the database for a table that fills it, so a new table enters through a YAML.
 
 ## Analyse
@@ -57,5 +58,7 @@ Why the skills work the way they do. The goal is a general analyst assistant for
 - **Quirks vs table YAML.** A fact about one table lives in that table's YAML; `quirks.md` holds only facts that span tables or are about reading results. The rule sits in AGENTS.md, so every session sees it and no fact gets two homes.
 - **`main` is protected.** Every change reaches `main` through a PR from a branch rebased onto it and merged with a merge commit, so each step shows as one unit and its commits keep their evidence. A GitHub ruleset and `deny` rules in `.claude/settings.json` block direct and force pushes.
 - **Name columns, explore small.** SQL names every column and never uses `SELECT *`, and exploration starts from a small slice such as the latest date, so every query reads only what it needs and `sessions` is never scanned blind.
+- **A run is a branch.** `/analyst` works on `analysis/<run folder>` and commits after every step, so each step's output is evidence in history; only the analyst skill commits, so a skill run on its own never does. Publishing asks first, rebases onto `origin/main` and opens a PR; the user merges the runs worth keeping, and a run replaces an older folder of the same slug on `main`. Knowledge changes get their own commits and are listed in the PR, so closing a run never loses them unnoticed.
+- **The credentials check is a script.** `helpers/check_credentials.py` compares the diff and commit messages with the `POSTGRES_*` values without printing them, so every push runs the same check and a missing variable or a git error fails instead of passing. Short values count only where they can be credentials (the user as a whole word, the port next to the host), so a number in a result table never blocks a push.
 - **The index rebuilds itself.** A hook in `.claude/settings.json` reruns the builder after any edit to a `.yaml` file in `knowledge/beam/`, so no one has to remember.
 - **`outputs/` is gitignored**, so runs stay local by default. One run is force-added as a worked example; an earlier run of the same question is kept on the `archive/march-price-retention-v1` branch rather than on main, so main holds one answer per question.

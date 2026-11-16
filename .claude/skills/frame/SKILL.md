@@ -83,7 +83,8 @@ Framed: <the question after framing, in clean wording>
 4. When the decision has a money side (a price, a discount, a cost to act), add under What would change the decision, as an analyst suggestion: the money at stake for the whole affected group over a stated period, next to any rate or per-customer figure. A rate says which way; money for the whole group says whether acting is worth it.
 5. Ask a peer, as you would a colleague in the office. Start a fresh agent with only a pitch of three or four sentences: "I've been asked <Question> so <Audience> can decide <Decision>. I'm thinking of looking at <what would change the decision> in <tables> over <window>. Makes sense?" Ask it to reply "Makes sense" or at most three "Have you thought about...?" lines, and to open no files.
 6. Ask for approval. First show the draft frame and the peer's reply as plain text in your message, because option previews do not show on every device. Then ask with AskUserQuestion: "Approve the frame", "Change a field", or "Stop" if much is unknown. Change nothing because of the peer's reply unless the user asks. If the answer is neither an approval nor a change, ask once more; never take silence as approval.
-7. On approval, write `outputs/<date>_<slug>/frame.md`, with the real date from `date +%F`. If the folder already holds more than `frame.md`, ask before overwriting.
+7. On approval, list the run folders on `main` with `git ls-files outputs`. If one answers the same question, ask with AskUserQuestion whether this is a rerun of it; on yes, reuse its slug.
+8. Write `outputs/<date>_<slug>/frame.md`, with the real date from `date +%F`. If the folder already holds more than `frame.md`, ask before overwriting.
 
 ## Deliver
 
