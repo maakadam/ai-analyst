@@ -13,3 +13,7 @@ conventions:
 not_yet_covered:   # say a question isn't covered rather than guess
   - ml.churn_snapshot
   - ml.trial_snapshot
+
+excluded:   # never query these; use the tables named instead
+  - table: marts.user_revenue_summary
+    reason: Unverified. No comments in the database, a snapshot from about 2026-07-29, and its payments disagree with public.payments for 2,245 users. Use public.payments and public.subscriptions.
