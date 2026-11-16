@@ -12,7 +12,7 @@ A data analyst that runs inside Claude Code on Beam's data. Beam is a media app 
 ```
 data/                    Beam CSV exports; never modified
 knowledge/beam/          one YAML per table, index.yaml, quirks.md, corrections.md
-helpers/                 profile, checks, charts, build_index; the arithmetic runs here
+helpers/                 profile, checks, charts, compare, build_index, check_credentials
 outputs/<date>_<slug>/   one folder per question:
                          frame.md, sql/, data/, analysis.py, charts/, review.md, brief.md
 .claude/skills/          analyst, frame, profile, analyse, validate, deliver
@@ -30,5 +30,5 @@ outputs/<date>_<slug>/   one folder per question:
 - A new fact about one table goes in its YAML: in the field's description if it changes how SQL is written, otherwise in `notes`. Only facts that span tables or are about reading results go in `quirks.md`. One home per fact.
 - When the user corrects you, append one dated line to `corrections.md` and continue.
 - Work on a branch and bring it into `main` through a PR; never push to `main` directly and never force-push.
-- Before every push, check that no database credentials are in the diff, the commit messages or `.env`/`.mcp.json`.
+- Before every push, run `poetry run python helpers/check_credentials.py`; push only on exit 0.
 - Before changing anything in `.claude/skills/` or `helpers/`, read `DECISIONS.md` and `TODO.md`; when a change sets or drops a rule, add or update one line in `DECISIONS.md`.
