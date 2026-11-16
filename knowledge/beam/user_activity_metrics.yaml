@@ -65,4 +65,4 @@ golden_queries:
       ORDER BY 1;
 
 notes:
-  - dau, wau and mau match counts from public.sessions exactly (checked for September 2026 and from 2024-01-30).
+  - dau, wau and mau match counts from public.sessions exactly (checked for September 2026 and from 2024-01-30), as the database's table comment says they should. That comment says "since 2025", but the data starts on 2024-01-01.
