@@ -125,13 +125,14 @@ The code can be right and the data underneath it can still change meaning halfwa
 Judge the method. Do not run checks yourself.
 
 1. Does every headline number have a fair baseline (like for like, including season), in named units?
-2. Are effects weighed against noise, and small groups not over-read?
-3. Are differences between groups tested, not assumed? Is a shift in the mix of groups checked?
-4. Are other explanations and confounders named? Is cause claimed from a correlation?
-5. Would the conclusion hold under reasonable other choices of baseline, definition or window?
-6. If a projection decides the call, does the analysis show that the rate it projects has held, rather than a one-off reaction? Is the answer over the observed months shown next to the projected one? If the two point different ways, the recommendation is at most tentative.
-7. Is the result big enough to matter for the decision, against the cost and risk of acting on it?
-8. Anything else that could make the answer wrong.
+2. For each headline comparison, list what differs besides the thing tested: period, stage, mix, nearby events. A difference that is neither controlled nor named is a finding.
+3. Are effects weighed against noise, and small groups not over-read?
+4. Are differences between groups tested, not assumed? Is a shift in the mix of groups checked?
+5. Are other explanations and confounders named? Is cause claimed from a correlation?
+6. Would the conclusion hold under reasonable other choices of baseline, definition or window?
+7. If a projection decides the call, does the analysis show that the rate it projects has held, rather than a one-off reaction? Is the answer over the observed months shown next to the projected one? If the two point different ways, the recommendation is at most tentative.
+8. Is the result big enough to matter for the decision, against the cost and risk of acting on it?
+9. Anything else that could make the answer wrong.
 
 ## Act 8: Write the review
 
