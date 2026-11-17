@@ -1,0 +1,7 @@
+trial_group,plan,converted_trials,with_first_payment,first_payment_usd,first_renewals_due,first_renewals_missed
+binge_quiet,annual,1,1,100.00,0,0
+binge_quiet,monthly,1,1,12.00,0,0
+neither,annual,35,35,3500.00,0,0
+neither,monthly,85,85,1020.00,23,0
+steady,annual,202,202,20200.00,0,0
+steady,monthly,504,504,6048.00,149,0

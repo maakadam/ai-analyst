@@ -1,0 +1,46 @@
+segment_type,segment,trial_group,trials,converted
+device,Android,binge_quiet,17,1
+device,Android,neither,177,49
+device,Android,steady,268,237
+device,iOS,binge_quiet,14,1
+device,iOS,neither,155,39
+device,iOS,steady,286,256
+device,Web,binge_quiet,8,0
+device,Web,neither,157,32
+device,Web,steady,267,213
+region,EU,binge_quiet,11,1
+region,EU,neither,100,17
+region,EU,steady,155,135
+region,India,binge_quiet,7,0
+region,India,neither,91,19
+region,India,steady,161,132
+region,Rest,binge_quiet,7,1
+region,Rest,neither,95,27
+region,Rest,steady,162,134
+region,US,binge_quiet,14,0
+region,US,neither,203,57
+region,US,steady,343,305
+start_week,2026-07-27,binge_quiet,1,0
+start_week,2026-07-27,neither,27,4
+start_week,2026-07-27,steady,53,49
+start_week,2026-08-03,binge_quiet,8,0
+start_week,2026-08-03,neither,84,21
+start_week,2026-08-03,steady,145,126
+start_week,2026-08-10,binge_quiet,5,1
+start_week,2026-08-10,neither,84,25
+start_week,2026-08-10,steady,144,118
+start_week,2026-08-17,binge_quiet,9,0
+start_week,2026-08-17,neither,75,23
+start_week,2026-08-17,steady,123,106
+start_week,2026-08-24,binge_quiet,5,1
+start_week,2026-08-24,neither,83,19
+start_week,2026-08-24,steady,135,114
+start_week,2026-08-31,binge_quiet,5,0
+start_week,2026-08-31,neither,76,15
+start_week,2026-08-31,steady,142,123
+start_week,2026-09-07,binge_quiet,6,0
+start_week,2026-09-07,neither,60,13
+start_week,2026-09-07,steady,79,70
+user_type,new signup,binge_quiet,39,2
+user_type,new signup,neither,489,120
+user_type,new signup,steady,821,706
