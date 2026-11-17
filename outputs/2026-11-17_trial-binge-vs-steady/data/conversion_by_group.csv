@@ -1,0 +1,7 @@
+trial_group,early_cancel,trials,converted,day1_sessions,week1_sessions,active_days_8_14,sessions_8_14,quiet_days_8_14
+binge_quiet,false,39,2,256,336,46,65,15
+binge_quiet,true,46,0,403,501,0,0,46
+neither,false,489,120,1361,3972,1074,1993,153
+neither,true,154,0,548,1149,0,0,154
+steady,false,821,706,4335,22229,4910,19395,28
+steady,true,4,0,28,64,0,0,4

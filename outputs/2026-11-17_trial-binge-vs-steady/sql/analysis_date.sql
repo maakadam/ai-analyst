@@ -1,0 +1,2 @@
+-- Analysis date: the earliest MAX(event date)::date of the tables in play (trials.started_at, users.signup_date); sessions never sets it.
+SELECT LEAST((SELECT MAX(started_at)::date FROM public.trials), (SELECT MAX(signup_date)::date FROM public.users)) AS analysis_date, (SELECT MAX(started_at)::date FROM public.trials) AS max_trial_start, (SELECT MAX(signup_date)::date FROM public.users) AS max_signup_date ORDER BY 1;

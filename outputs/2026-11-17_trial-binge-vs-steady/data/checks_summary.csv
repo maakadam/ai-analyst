@@ -1,0 +1,27 @@
+check,ok,summary
+groups sum to matured trials,True,"The parts sum to 1,553.00 against a total of 1,553.00 (0.00% apart), so they match."
+group conversions sum to converted trials,True,"The parts sum to 828.00 against a total of 828.00 (0.00% apart), so they match."
+users join does not fan out,True,1553 rows after the users join for 1553 matured trials.
+subscriptions join does not fan out,True,828 rows after the subscriptions join for 828 converted trials.
+one trial per user,True,2073 users for 2073 trials.
+variant all_trials sums to its population,True,"The parts sum to 1,553.00 against a total of 1,553.00 (0.00% apart), so they match."
+variant binge_6plus sums to its population,True,"The parts sum to 1,349.00 against a total of 1,349.00 (0.00% apart), so they match."
+variant days_1_4_all_trials sums to its population,True,"The parts sum to 1,553.00 against a total of 1,553.00 (0.00% apart), so they match."
+variant main sums to its population,True,"The parts sum to 1,349.00 against a total of 1,349.00 (0.00% apart), so they match."
+variant quiet_none_days_2_4 sums to its population,True,"The parts sum to 1,349.00 against a total of 1,349.00 (0.00% apart), so they match."
+variant same_day1_binge sums to its population,True,"The parts sum to 1,349.00 against a total of 1,349.00 (0.00% apart), so they match."
+spread table sums to matured trials,True,"The parts sum to 1,553.00 against a total of 1,553.00 (0.00% apart), so they match."
+spread table sums to converted trials,True,"The parts sum to 828.00 against a total of 828.00 (0.00% apart), so they match."
+device segments sum to trials,True,"The parts sum to 1,349.00 against a total of 1,349.00 (0.00% apart), so they match."
+device segments sum to conversions,True,"The parts sum to 828.00 against a total of 828.00 (0.00% apart), so they match."
+region segments sum to trials,True,"The parts sum to 1,349.00 against a total of 1,349.00 (0.00% apart), so they match."
+region segments sum to conversions,True,"The parts sum to 828.00 against a total of 828.00 (0.00% apart), so they match."
+start_week segments sum to trials,True,"The parts sum to 1,349.00 against a total of 1,349.00 (0.00% apart), so they match."
+start_week segments sum to conversions,True,"The parts sum to 828.00 against a total of 828.00 (0.00% apart), so they match."
+user_type segments sum to trials,True,"The parts sum to 1,349.00 against a total of 1,349.00 (0.00% apart), so they match."
+user_type segments sum to conversions,True,"The parts sum to 828.00 against a total of 828.00 (0.00% apart), so they match."
+conversion recorded the same way across start months,True,"trial conversion (share) shows no lasting step beyond 10% of its recent level across all 2 periods; largest step 53% to 54% in 2026-09, so the periods can be compared."
+every converted trial has a first payment,True,828 first payments for 828 converted trials.
+renewal table covers every conversion,True,"The parts sum to 828.00 against a total of 828.00 (0.00% apart), so they match."
+no sessions after a cancel inside the trial,True,"0 sessions after the cancel day across 725 canceled trials; at 0, quiet after a cancel is caused by the cancel."
+no cancel before trial day 5,True,"cancels fall on trial days 5 to 14; from day 5 on, days 1-4 always come before any cancel, which the days_1_4_all_trials variant needs."

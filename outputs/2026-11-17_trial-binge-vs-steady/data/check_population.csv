@@ -1,0 +1,2 @@
+all_trials,matured_trials,converted_trials,unmatured_with_outcome,first_start,last_matured_start,distinct_trial_users,matured_rows_after_users_join,converted_rows_after_subscriptions_join
+2073,1553,828,102,2026-08-01T00:00:00Z,2026-09-10T00:00:00Z,2073,1553,828
