@@ -10,6 +10,8 @@ variant days_1_4_all_trials sums to its population,True,"The parts sum to 1,553.
 variant main sums to its population,True,"The parts sum to 1,349.00 against a total of 1,349.00 (0.00% apart), so they match."
 variant quiet_none_days_2_4 sums to its population,True,"The parts sum to 1,349.00 against a total of 1,349.00 (0.00% apart), so they match."
 variant same_day1_binge sums to its population,True,"The parts sum to 1,349.00 against a total of 1,349.00 (0.00% apart), so they match."
+spread table sums to matured trials,True,"The parts sum to 1,553.00 against a total of 1,553.00 (0.00% apart), so they match."
+spread table sums to converted trials,True,"The parts sum to 828.00 against a total of 828.00 (0.00% apart), so they match."
 device segments sum to trials,True,"The parts sum to 1,349.00 against a total of 1,349.00 (0.00% apart), so they match."
 device segments sum to conversions,True,"The parts sum to 828.00 against a total of 828.00 (0.00% apart), so they match."
 region segments sum to trials,True,"The parts sum to 1,349.00 against a total of 1,349.00 (0.00% apart), so they match."
@@ -21,5 +23,5 @@ user_type segments sum to conversions,True,"The parts sum to 828.00 against a to
 conversion recorded the same way across start months,True,"trial conversion (share) shows no lasting step beyond 10% of its recent level across all 2 periods; largest step 53% to 54% in 2026-09, so the periods can be compared."
 every converted trial has a first payment,True,828 first payments for 828 converted trials.
 renewal table covers every conversion,True,"The parts sum to 828.00 against a total of 828.00 (0.00% apart), so they match."
-no sessions after a cancel inside the trial,True,"0 sessions after the outcome day across 1553 trials, so a cancel ends activity and quiet after it is caused by it."
-cancel days,True,"cancels fall on trial days 5 to 14, so days 1-4 always come before any cancel."
+no sessions after a cancel inside the trial,True,"0 sessions after the cancel day across 725 canceled trials; at 0, quiet after a cancel is caused by the cancel."
+no cancel before trial day 5,True,"cancels fall on trial days 5 to 14; from day 5 on, days 1-4 always come before any cancel, which the days_1_4_all_trials variant needs."

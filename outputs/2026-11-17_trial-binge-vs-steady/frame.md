@@ -36,6 +36,7 @@ Trials started 2026-08-01 to about 2026-09-10 that had ended by the analysis dat
 ## Additional context
 - The user asks that comparisons be made between similar time periods.
 - The user has no prior definition of binge or steady use and expects the analyst to propose one from the data.
+- 2026-11-17, before any outcome was looked at: the user approved the analysis plan's definitions, binge then quiet as 4+ day-1 sessions and active on at most 2 of days 2 to 7, steady as active on day 1 and on 5+ of days 2 to 7 (stricter than the 4-of-7 starting point above, which runs as a variant). Told that about 85 binge-then-quiet trials can only show a large gap (roughly 16 pp), the user chose to keep the definitions rather than loosen them.
 - The 2026-11-07 correction to exclude the trial period was made for a churn question and does not apply here; this question is about trials only.
 
 ## Out of scope
