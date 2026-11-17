@@ -227,11 +227,32 @@ def group_rate(df):
     return df["missed_renewals"].sum() / df["renewals_due"].sum()
 
 
+AFTER_MONTHS = ["2026-03", "2026-04", "2026-05", "2026-06", "2026-07"]
+# Entries into the renewal stream after the rise: existing groups are closed, so all of them enter with
+# their March renewals; new subscribers enter at their first renewal each month.
+new_first = early[(early["start_group"] == "new") & (early["renewal_number"].astype(str) == "1")]
+new_entries = new_first.set_index("due_month")["renewals_due"].reindex(AFTER_MONTHS, fill_value=0)
+
+
+def counterfactual_10(entries, c0):
+    """Revenue Mar to Jul had the price stayed $10: renewals carried forward month by month at the $10
+    churn rate, so subscribers lost to the extra churn keep paying on this side."""
+    due, revenue = 0.0, 0.0
+    for m in AFTER_MONTHS:
+        due += entries.get(m, 0)
+        paid = due * (1 - c0)
+        revenue += paid * OLD_PRICE
+        due = paid
+    return revenue
+
+
 rows = []
 for g in GROUPS:
     d = coh[coh["group"] == g]
     young = g in ("new (started at $12)", "started Jan to Feb 2026")
     c0 = e.churn_rate_before if young else group_rate(d[d["period"] == "before"])
+    entries = (new_entries.to_dict() if g == "new (started at $12)"
+               else {"2026-03": d.loc[d["due_month"] == "2026-03", "renewals_due"].sum()})
     rows.append({
         "group": g,
         "base_jul_2026": d.loc[d["due_month"] == "2026-07", "renewals_due"].sum(),
@@ -239,25 +260,32 @@ for g in GROUPS:
         "churn_at_10_source": "pre-March starters, first three renewals" if young else "own, Nov 2025 to Feb 2026",
         "churn_at_12_settled": group_rate(d[d["due_month"] >= "2026-05"]),
         "churn_at_12_mar_jul": group_rate(d[d["period"] == "after"]),
-        # Observed so far: each renewal due Mar to Jul at $12 with the churn seen, against the same
-        # renewals at $10 with the $10 churn rate (one month each, no compounding).
+        "churn_at_12_jul": group_rate(d[d["due_month"] == "2026-07"]),
+        # Observed so far: renewals actually paid Mar to Jul at $12, against the same entries carried
+        # forward at $10 with the $10 churn rate.
         "observed_mar_jul_at_12": ((d.loc[d["period"] == "after", "renewals_due"]
                                     - d.loc[d["period"] == "after", "missed_renewals"]) * NEW_PRICE).sum(),
-        "counterfactual_mar_jul_at_10": (d.loc[d["period"] == "after", "renewals_due"] * (1 - c0) * OLD_PRICE).sum(),
+        "counterfactual_mar_jul_at_10": counterfactual_10(entries, c0),
     })
 money = pd.DataFrame(rows)
 money["observed_gain_mar_jul"] = money["observed_mar_jul_at_12"] - money["counterfactual_mar_jul_at_10"]
 money["rollback_10_12m"] = money.apply(lambda r: revenue_12m(r.base_jul_2026, r.churn_at_10, OLD_PRICE), axis=1)
-money["keep_12_12m_settled"] = money.apply(lambda r: revenue_12m(r.base_jul_2026, r.churn_at_12_settled, NEW_PRICE), axis=1)
-money["keep_12_12m_mar_jul"] = money.apply(lambda r: revenue_12m(r.base_jul_2026, r.churn_at_12_mar_jul, NEW_PRICE), axis=1)
-money["gain_12m_settled"] = money["keep_12_12m_settled"] - money["rollback_10_12m"]
-money["gain_12m_mar_jul"] = money["keep_12_12m_mar_jul"] - money["rollback_10_12m"]
+for case in ("settled", "mar_jul", "jul"):
+    money[f"keep_12_12m_{case}"] = money.apply(
+        lambda r: revenue_12m(r.base_jul_2026, r[f"churn_at_12_{case}"], NEW_PRICE), axis=1)
+    money[f"gain_12m_{case}"] = money[f"keep_12_12m_{case}"] - money["rollback_10_12m"]
 money["breakeven_churn_at_12"] = money["churn_at_10"].map(breakeven_churn)
 money["headroom_pp_settled"] = (money["breakeven_churn_at_12"] - money["churn_at_12_settled"]) * 100
+signs = money[["gain_12m_settled", "gain_12m_mar_jul", "gain_12m_jul"]].gt(0)
+money["call_12m"] = signs.all(axis=1).map({True: "keep $12"}).fillna(
+    (~signs).all(axis=1).map({True: "roll back to $10"})).fillna("too close to call")
 total = money[["base_jul_2026", "observed_mar_jul_at_12", "counterfactual_mar_jul_at_10", "observed_gain_mar_jul",
-               "rollback_10_12m", "keep_12_12m_settled", "keep_12_12m_mar_jul", "gain_12m_settled",
-               "gain_12m_mar_jul"]].sum()
-money = pd.concat([money, pd.DataFrame([{"group": "all monthly", **total.to_dict()}])], ignore_index=True)
+               "rollback_10_12m", "keep_12_12m_settled", "keep_12_12m_mar_jul", "keep_12_12m_jul",
+               "gain_12m_settled", "gain_12m_mar_jul", "gain_12m_jul"]].sum()
+tsigns = [total[c] > 0 for c in ("gain_12m_settled", "gain_12m_mar_jul", "gain_12m_jul")]
+total_call = "keep $12" if all(tsigns) else "roll back to $10" if not any(tsigns) else "too close to call"
+money = pd.concat([money, pd.DataFrame([{"group": "all monthly", **total.to_dict(), "call_12m": total_call}])],
+                  ignore_index=True)
 money.to_csv(DATA / "revenue_keep_vs_rollback_by_group.csv", index=False)
 show("group bases add to July 2026 renewals due",
      parts_sum_to_total(money.loc[money["group"] != "all monthly", "base_jul_2026"],
@@ -265,10 +293,11 @@ show("group bases add to July 2026 renewals due",
 print("\nKeep $12 minus roll back to $10, by group (July 2026 base)")
 for _, r in money.iterrows():
     rates_txt = ("" if r.group == "all monthly" else
-                 f"churn {r.churn_at_10:.2%} -> settled {r.churn_at_12_settled:.2%} (Mar-Jul {r.churn_at_12_mar_jul:.2%}), "
-                 f"break-even {r.breakeven_churn_at_12:.2%}; ")
+                 f"churn {r.churn_at_10:.2%} -> settled {r.churn_at_12_settled:.2%} (Mar-Jul {r.churn_at_12_mar_jul:.2%}, "
+                 f"Jul {r.churn_at_12_jul:.2%}), break-even {r.breakeven_churn_at_12:.2%}; ")
     print(f"  {r.group:30s} base {r.base_jul_2026:5,.0f}  {rates_txt}observed Mar-Jul {r.observed_gain_mar_jul:+,.0f}; "
-          f"12 months settled {r.gain_12m_settled:+,.0f}, Mar-Jul rate {r.gain_12m_mar_jul:+,.0f}")
+          f"12 months settled {r.gain_12m_settled:+,.0f}, Mar-Jul rate {r.gain_12m_mar_jul:+,.0f}, "
+          f"Jul rate {r.gain_12m_jul:+,.0f}; call: {r.call_12m}")
 
 # ---- Charts -------------------------------------------------------------------------------------
 def relabel(fig, values, fmt):
@@ -292,11 +321,13 @@ for g in GROUPS:
     m = coh_month[coh_month["group"] == g].set_index("due_month")["churn_rate"]
     if all(x in m.index for x in after_months):
         series[g] = (m.reindex(after_months) * 100).round(2).tolist()
-charts.save(charts.line(
+fig = charts.line(
     after_months, series,
-    "Churn rose in every start group except 2024 starters and stayed well above its earlier level through July",
+    "Existing subscribers: churn rose in every start group but 2024 and stayed high through July",
     highlight="started 2024",
-    ylabel="Churn rate per month (%)", source=SOURCE), CHARTS / "churn_by_group_and_month.png")
+    ylabel="Churn rate per month (%)", source=SOURCE)
+fig.axes[0].set_ylim(bottom=0)
+charts.save(fig, CHARTS / "churn_by_group_and_month.png")
 
 ch = coh_half.set_index("start_cohort")
 seg_rows = [(f"existing, {b}", existing_noblock.set_index("tenure_band").loc[b, "change_pp"]) for b in order]
