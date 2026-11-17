@@ -98,6 +98,7 @@ starts = read("new_paid_starts_by_month")
 gaps = pd.read_csv(DATA / "check_payment_gap_stability.csv")
 joins = pd.read_csv(DATA / "check_joins_and_edges.csv").iloc[0]
 totals = pd.read_csv(DATA / "check_csv_totals.csv").iloc[0]
+cohorts = read("churn_by_start_quarter_month")
 print(f"Analysis date: {analysis_date[:10]}")
 
 by_month["window"] = by_month["due_month"].map(window)
@@ -117,6 +118,9 @@ for dim, part in seg.groupby("dimension"):
     r = parts_sum_to_total(part["renewals_due"], organic_existing["renewals_due"].sum(), tolerance=0)
     m = parts_sum_to_total(part["missed_renewals"], organic_existing["missed_renewals"].sum(), tolerance=0)
     check(f"segments_sum_{dim}", r["ok"] and m["ok"], f"renewals: {r['summary']} Missed: {m['summary']}")
+r = parts_sum_to_total(cohorts["renewals_due"], organic_existing["renewals_due"].sum(), tolerance=0)
+m = parts_sum_to_total(cohorts["missed_renewals"], organic_existing["missed_renewals"].sum(), tolerance=0)
+check("segments_sum_start_quarter", r["ok"] and m["ok"], f"renewals: {r['summary']} Missed: {m['summary']}")
 
 monthly_prices = price[price["plan"] == "monthly"]
 wrong = monthly_prices[((monthly_prices["payment_month"] < "2026-03-01") & (monthly_prices["amount_usd"] != OLD_PRICE))
@@ -174,8 +178,80 @@ for (dim, s), part in seg.groupby(["dimension", "segment"]):
 segments = pd.DataFrame(seg_rows)
 segments.to_csv(DATA / "churn_by_segment.csv", index=False)
 
+# ---------------------------------------------------------------- start cohorts (organic existing), review A2 and A3
+def cohort_group(q):
+    if q < "2024-Q1":
+        return "started 2022 to 2023"
+    if q <= "2025-Q1":
+        return "started Jan 2024 to Mar 2025"
+    return "started Apr 2025 to Feb 2026"
+
+
+GROUP_ORDER = ["started 2022 to 2023", "started Jan 2024 to Mar 2025", "started Apr 2025 to Feb 2026"]
+cohorts["window"] = cohorts["due_month"].map(window)
+cohorts["cohort_group"] = cohorts["start_quarter"].map(cohort_group)
+
+quarter_rows = []
+for q, part in cohorts.groupby("start_quarter"):
+    b, a = part[part["window"] == "before"], part[part["window"] == "after"]
+    if b.empty or a.empty:
+        continue
+    row = compare(b["renewals_due"].sum(), b["missed_renewals"].sum(), a["renewals_due"].sum(), a["missed_renewals"].sum())
+    quarter_rows.append({"start_quarter": q, "cohort_group": cohort_group(q), **row,
+                         "big_enough": min(row["renewals_before"], row["renewals_after"]) >= MIN_RENEWALS})
+pd.DataFrame(quarter_rows).to_csv(DATA / "churn_by_start_quarter.csv", index=False)
+
+
+def observed_vs_counterfactual(monthly_rows, churn_before):
+    """Revenue actually collected Mar-Jul at $12 against the same base at $10 with the before churn rate.
+
+    Paid renewals each month are scaled by the ratio of counterfactual to observed survival since March.
+    """
+    after = monthly_rows[monthly_rows["due_month"] >= "2026-03-01"].sort_values("due_month")
+    paid = after["renewals_due"] - after["missed_renewals"]
+    observed_survival = (1 - after["missed_renewals"] / after["renewals_due"]).cumprod()
+    cf_survival = pd.Series([(1 - churn_before) ** (k + 1) for k in range(len(after))], index=after.index)
+    observed = float((paid * NEW_PRICE).sum())
+    counterfactual = float((paid * cf_survival / observed_survival * OLD_PRICE).sum())
+    return observed, counterfactual
+
+
+group_rows, held_rows = [], []
+group_frames = [(g, cohorts[cohorts["cohort_group"] == g].groupby("due_month", as_index=False)[
+    ["renewals_due", "missed_renewals"]].sum()) for g in GROUP_ORDER]
+group_frames.append(("all organic existing", organic_existing.groupby("due_month", as_index=False)[
+    ["renewals_due", "missed_renewals"]].sum()))
+for g, gm in group_frames:
+    b, a = gm[gm["due_month"] < "2026-03-01"], gm[gm["due_month"] >= "2026-03-01"]
+    row = compare(b["renewals_due"].sum(), b["missed_renewals"].sum(), a["renewals_due"].sum(), a["missed_renewals"].sum())
+    late = gm[gm["due_month"] >= "2026-04-01"]
+    late_rate = late["missed_renewals"].sum() / late["renewals_due"].sum()
+    size = int(gm.loc[gm["due_month"] == "2026-07-01", "renewals_due"].sum())
+    obs, cf = observed_vs_counterfactual(gm, row["churn_before"])
+    group_rows.append({"cohort_group": g, **row, "churn_apr_jul": late_rate,
+                       "above_break_even": row["change_relative"] > BREAK_EVEN_REL,
+                       **money(row["churn_before"], row["churn_after"], size),
+                       **{f"apr_jul_{k}": v for k, v in money(row["churn_before"], late_rate, size).items()
+                          if k in ("gain_12m_per_subscriber", "gain_12m_group", "months_until_12_falls_behind")},
+                       "observed_revenue_mar_jul_at_12": obs, "counterfactual_revenue_mar_jul_at_10": cf,
+                       "observed_gain_mar_jul": obs - cf})
+    for _, mrow in a.iterrows():
+        rate = mrow["missed_renewals"] / mrow["renewals_due"]
+        held_rows.append({"cohort_group": g, "due_month": mrow["due_month"].date(), "renewals_due": mrow["renewals_due"],
+                          "churn_rate": rate, "churn_before": row["churn_before"],
+                          "above_break_even": rate / row["churn_before"] - 1 > BREAK_EVEN_REL})
+cohort_summary = pd.DataFrame(group_rows)
+cohort_summary.to_csv(DATA / "churn_by_cohort_group.csv", index=False)
+held = pd.DataFrame(held_rows)
+held.to_csv(DATA / "churn_after_by_month_cohort_group.csv", index=False)
+
 # ---------------------------------------------------------------- new starts at the same renewal number
 ns = new_starts.assign(churn_rate=new_starts["missed_renewals"] / new_starts["renewals_due"])
+ns_se = (ns["churn_rate"] * (1 - ns["churn_rate"]) / ns["renewals_due"]) ** 0.5
+ns["ci_low"] = (ns["churn_rate"] - Z * ns_se).clip(lower=0)
+ns["ci_high"] = ns["churn_rate"] + Z * ns_se
+ns["due_months"] = ns["cohort"].map({"starts_nov25_jan26_at_10": "Dec 2025 to Feb 2026",
+                                     "starts_mar26_jun26_at_12": "Apr to Jul 2026"})
 ns.to_csv(DATA / "new_start_churn_rate_by_renewal.csv", index=False)
 before_ns = ns[ns["cohort"] == "starts_nov25_jan26_at_10"].set_index("renewal_number")
 after_ns = ns[ns["cohort"] == "starts_mar26_jun26_at_12"].set_index("renewal_number")
@@ -196,6 +272,9 @@ new_start_summary = pd.DataFrame([{
     "change_relative_standardised": ns_after_rate / ns_before_rate - 1,
     "above_break_even": ns_after_rate / ns_before_rate - 1 > BREAK_EVEN_REL,
     **money(ns_before_rate, ns_after_rate, avg_new_monthly_starts),
+    "new_monthly_starts_per_year": avg_new_monthly_starts * 12,
+    "gain_12m_year_of_starts": money(ns_before_rate, ns_after_rate, 1)["gain_12m_per_subscriber"] * avg_new_monthly_starts * 12,
+    "season_note": "renewals at $10 fell due Dec 2025 to Feb 2026, at $12 Apr to Jul 2026; season is not controlled",
 }])
 new_start_summary.to_csv(DATA / "new_start_summary.csv", index=False)
 
@@ -242,7 +321,7 @@ oe_m = monthly[(monthly["customer_type"] == "existing") & (monthly["block_flag"]
 labels = oe_m["due_month"].dt.strftime("%b %y")
 charts.save(charts.line(
     labels, {"Existing subscribers": (oe_m["churn_rate"] * 100).round(2)},
-    "Churn at renewal rose from about 1.3% to 3-5% a month once renewals followed a $12 charge",
+    r"Churn at renewal rose from about 1.3% to 3-5% a month once renewals followed a \$12 charge",
     highlight="Existing subscribers", ylabel="Missed renewals, % of renewals due",
     source="Organic existing monthly subscribers, renewals due Nov 2025 to Jul 2026. sql/churn_by_due_month.sql"),
     CHARTS / "churn_by_due_month.png")
@@ -251,26 +330,41 @@ s = segments.assign(name=segments["dimension"].str.replace("_", " ") + ": " + se
 s = s.sort_values("change_relative", ascending=False)
 charts.save(charts.bar(
     s["name"], (s["change_relative"] * 100).round(0),
-    "Every group's churn rose far past the 20% break-even line, so no group stands out for a rollback",
+    "Churn rose past the 20% break-even line in every region, device and tenure band",
     highlight=list(s["name"].head(3)), ylabel="Relative rise in churn, Mar-Jul vs Nov-Feb (%)", horizontal=True,
-    source="Break-even for a $10 to $12 rise is +20% relative. sql/churn_by_segment_month.sql"),
+    source=r"Break-even for a \$10 to \$12 rise is +20% relative. sql/churn_by_segment_month.sql"),
     CHARTS / "churn_rise_by_segment.png")
+
+hm = held[held["cohort_group"] != "all organic existing"].copy()
+cg_lines = {}
+for g in GROUP_ORDER:
+    gm = [x for name, x in group_frames if name == g][0].sort_values("due_month")
+    cg_lines[g] = (gm["missed_renewals"] / gm["renewals_due"] * 100).round(2).values
+cg_x = [x for name, x in group_frames if name == GROUP_ORDER[0]][0].sort_values("due_month")["due_month"].dt.strftime("%b %y")
+flat = cohort_summary.set_index("cohort_group").loc["started Jan 2024 to Mar 2025"]
+charts.save(charts.line(
+    cg_x, cg_lines,
+    f"Subscribers who started Jan 2024 to Mar 2025 kept churning about {flat['churn_after'] * 100:.1f}% a month; the rest rose",
+    highlight="started Jan 2024 to Mar 2025", ylabel="Missed renewals, % of renewals due",
+    source="Organic existing monthly subscribers by start date. sql/churn_by_start_quarter_month.sql"),
+    CHARTS / "churn_by_cohort_group.png")
 
 charts.save(charts.line(
     [f"Renewal {n}" for n in shared],
-    {"Started Nov-Jan at $10": (before_ns.loc[shared, "churn_rate"] * 100).round(1),
-     "Started Mar-Jun at $12": (after_ns.loc[shared, "churn_rate"] * 100).round(1)},
-    "New subscribers who joined at $12 churn several times more at the same renewal",
-    highlight="Started Mar-Jun at $12", ylabel="Missed renewals, % of renewals due",
-    source="New monthly starts, no trial record. sql/new_start_churn_by_renewal.sql"),
+    {r"Started Nov-Jan at \$10": (before_ns.loc[shared, "churn_rate"] * 100).round(1),
+     r"Started Mar-Jun at \$12": (after_ns.loc[shared, "churn_rate"] * 100).round(1)},
+    r"New subscribers who joined at \$12 churn several times more at the same renewal",
+    highlight=r"Started Mar-Jun at \$12", ylabel="Missed renewals, % of renewals due",
+    source="New monthly starts, no trial record; renewals due in different seasons. sql/new_start_churn_by_renewal.sql"),
     CHARTS / "new_start_churn_by_renewal.png")
 
-charts.save(charts.line(
-    path["month"], {"$10 at old churn": path["at_10_old_churn"].round(1), "$12 at new churn": path["at_12_new_churn"].round(1)},
-    f"$12 earns more for about {money_rows[0]['months_until_12_falls_behind'] - 1} months, then falls behind $10 for good",
-    highlight="$12 at new churn", ylabel="Cumulative revenue per subscriber ($)",
-    source="Expected revenue per existing subscriber at steady churn. data/revenue_path_existing.csv"),
-    CHARTS / "revenue_path_existing.png")
+fig = charts.line(
+    path["month"], {r"\$10 at old churn": path["at_10_old_churn"].round(1), r"\$12 at new churn": path["at_12_new_churn"].round(1)},
+    rf"\$12 earns more for about {money_rows[0]['months_until_12_falls_behind'] - 1} months, then falls behind \$10 if churn stays this high",
+    highlight=r"\$12 at new churn", ylabel=r"Cumulative revenue per subscriber (\$)",
+    source="Expected revenue per existing subscriber at steady churn. data/revenue_path_existing.csv")
+fig.axes[0].set_xlabel("Months from now")
+charts.save(fig, CHARTS / "revenue_path_existing.png")
 
 # ---------------------------------------------------------------- report
 pd.set_option("display.width", 200)
@@ -280,9 +374,19 @@ print(headline[["group", "after_window", "churn_before", "churn_after", "change_
 print("\nSplits (organic existing, Nov-Feb vs Mar-Jul):")
 print(segments[["dimension", "segment", "churn_before", "churn_after", "change_pp", "change_relative", "big_enough",
                 "gain_12m_per_subscriber", "months_until_12_falls_behind"]].round(4).to_string(index=False))
-print("\nNew starts:")
+print("\nStart cohort groups (organic existing):")
+print(cohort_summary[["cohort_group", "churn_before", "churn_after", "churn_apr_jul", "change_pp", "change_pp_ci_low",
+                      "change_pp_ci_high", "change_relative", "group_size", "gain_12m_group", "apr_jul_gain_12m_group",
+                      "months_until_12_falls_behind", "observed_gain_mar_jul"]].round(4).to_string(index=False))
+print("\nAfter-window churn by month and cohort group:")
+print(held.pivot_table(index="due_month", columns="cohort_group", values="churn_rate").round(4).to_string())
+print("\nStart quarters:")
+print(pd.DataFrame(quarter_rows)[["start_quarter", "churn_before", "churn_after", "change_relative", "big_enough"]].round(4).to_string(index=False))
+print("\nNew starts by renewal number:")
+print(ns[["cohort", "renewal_number", "renewals_due", "churn_rate", "ci_low", "ci_high"]].round(4).to_string(index=False))
 print(new_start_summary[["churn_before_standardised", "churn_after_standardised", "change_relative_standardised",
-                         "gain_12m_per_subscriber", "months_until_12_falls_behind"]].round(4).to_string(index=False))
+                         "gain_12m_per_subscriber", "new_monthly_starts_per_year", "gain_12m_year_of_starts",
+                         "months_until_12_falls_behind"]].round(4).to_string(index=False))
 print("\nNew paid start mix:")
 print(mix_table.round(3).to_string(index=False))
 print("\nAnnual reference:")
