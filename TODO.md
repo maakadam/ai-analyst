@@ -27,6 +27,3 @@ Ideas for later. Not built yet.
 - [ ] **Explain the two price answers**: the Week 1 run (CSV exports) puts monthly churn after the increase at 5.1%, the database run at 4.2% (April to July 2026). Nothing explains the difference yet; the database has payments back to 2022, the CSVs from 2025.
 - [ ] **Two review findings left from the semantic layer**: `weekly_trial_conversion_rate` (trials.yaml) counts partial first and last weeks; the `monthly_paid_churn_rate` description (subscriptions.yaml) lacks its date range.
 - [ ] **Stale docstring**: `helpers/build_index.py` still says the hand-written part holds "tables not covered yet"; that list is gone, and the header now holds the dialect, conventions and `excluded`.
-
-## Repo
-- [ ] **Branch clean-up**: as of 2026-11-17, 24 remote branches are merged into `main`. Delete all but `archive/week1-csv-data` and `archive/march-price-retention-v1`, which hold the Week 1 data and an earlier run. Decide on the 7 unmerged ones: `analysis/2026-11-17_price-rise-rollback`, `analysis/march-2026-price-retention`, `-v2`, `-v3`, `analysis/run-comparison`, `ccr-3d637bae-2ss3kt`, `test/trials-question`. Delete the 16 merged local branches too.
