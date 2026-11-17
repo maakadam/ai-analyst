@@ -1,0 +1,10 @@
+check,ok,summary
+csv_totals,True,"churn_by_due_month has 23 rows, 47,151 renewals and 1,439 missed; the source gives 23, 47,151 and 1,439."
+segments_sum_country,True,"renewals: The parts sum to 38,708.00 against a total of 38,708.00 (0.00% apart), so they match. Missed: The parts sum to 1,014.00 against a total of 1,014.00 (0.00% apart), so they match."
+segments_sum_device_type,True,"renewals: The parts sum to 38,708.00 against a total of 38,708.00 (0.00% apart), so they match. Missed: The parts sum to 1,014.00 against a total of 1,014.00 (0.00% apart), so they match."
+segments_sum_tenure_band,True,"renewals: The parts sum to 38,708.00 against a total of 38,708.00 (0.00% apart), so they match. Missed: The parts sum to 1,014.00 against a total of 1,014.00 (0.00% apart), so they match."
+price_charged,True,"every monthly charge is $10 before 2026-03-01 and $12 from then (0 month-price rows off); annual is $100 throughout, so every monthly subscriber was treated and none was grandfathered."
+renewal_outcome_stable,True,"Next charge exactly 30 days after the last (share) shows no lasting step beyond 10% of its recent level across all 9 periods; largest step 100% to 100% in 2025-12, so the periods can be compared. Gaps range 30 to 30 days."
+joins_do_not_fan_out,True,"137,836 monthly payment rows before and after both joins."
+trial_exclusion,True,"no monthly subscription starting before 2026-08-01 has a trial record, so dropping trial users removes nobody in the window."
+window_edges_closed,True,"renewals due 2025-11-01 to 2026-07-31; the last one's next charge would fall by 2026-08-30, before the analysis date 2026-09-24, so every renewal is decided."

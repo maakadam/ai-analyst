@@ -1,0 +1,2 @@
+-- Analysis date: the earliest MAX(event date)::date of the tables in play (payments.payment_date, users.signup_date).
+SELECT LEAST((SELECT MAX(payment_date)::date FROM public.payments), (SELECT MAX(signup_date)::date FROM public.users)) AS analysis_date, (SELECT MAX(payment_date)::date FROM public.payments) AS max_payment_date, (SELECT MAX(signup_date)::date FROM public.users) AS max_signup_date ORDER BY 1;
