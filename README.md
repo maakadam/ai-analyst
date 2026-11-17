@@ -87,17 +87,23 @@ There is no framework and no Python program controlling the model. The agent is 
 
 All six skills are in place and work against the database, so `/analyst` runs end to end. The course repo shipped Profile, Analyse and the helpers; Frame, Validate and Deliver were written here, and in Week 2 every skill moved from CSV exports to the database. `knowledge/beam/` holds a YAML for every table the analyst may use. `TODO.md` lists ideas for later.
 
-## The price question
+## The course questions
 
-The Week 1 answer to the course question is in `outputs/2026-11-07_march-price-retention/`: start with `brief.md`, then `review.md`, `analysis.py`, `data/` and `charts/`. Monthly churn rose from 1.3% to 5.1% after the increase, mostly in the first year of a subscription. It was computed from the CSV exports, which are now kept on the `archive/week1-csv-data` branch, so its script no longer reruns on `main`; a rerun against the database will replace it.
+Each run folder holds the whole answer: start with `brief.md`, then `review.md`, `analysis.py`, `sql/`, `data/` and `charts/`.
 
-An earlier run of the same question, made before the trial period was excluded, is kept on the `archive/march-price-retention-v1` branch for comparison.
-
-Try it with the course question:
+**The price question**, answered against the database in `outputs/2026-11-17_price-increase-retention/`. Monthly churn rose from 1.3% before March 2026 to 4.2% from April to July; the brief recommends keeping $12 and testing a rollback on new monthly signups.
 
 ```
 /analyst Did the March 2026 price increase hurt retention, and for whom? The head of growth is deciding whether to roll back part of the increase for some customers.
 ```
+
+**The trial question**, in `outputs/2026-11-17_trial-binge-vs-steady/`. Trial users who binge on day one and then go quiet convert at 5.1%, against 86.0% for steady users; the brief recommends onboarding emails that bring users back on several days, launched as a test.
+
+```
+/analyst Do trial users who binge on day one and then go quiet convert worse than steady users? The head of growth is deciding whether the onboarding emails should push trial users to spread their first week out.
+```
+
+The Week 1 answer to the price question is kept in `outputs/2026-11-07_march-price-retention/` as a record. It was computed from the CSV exports, now on the `archive/week1-csv-data` branch, so its script no longer reruns on `main`; it put churn after the increase at 5.1%. An earlier run, made before the trial period was excluded, is on the `archive/march-price-retention-v1` branch.
 
 ## Design decisions
 

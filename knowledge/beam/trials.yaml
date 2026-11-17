@@ -71,3 +71,6 @@ golden_queries:
       WHERE ends_at < DATE '2026-09-25'
       GROUP BY 1
       ORDER BY 1;
+
+notes:
+  - Checked 2026-11-17 on the 1,553 trials that had ended by 2026-09-24. Cancels fall only on trial days 5 to 14 (day 1 is the start day), spread roughly evenly at 64 to 83 a day. Every conversion falls on day 15, the ends_at day. So no trial is canceled in its first four days.
