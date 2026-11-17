@@ -1,0 +1,3 @@
+window,annual_at_month_start,annual_churned,annual_anniversaries_in_month,annual_churned_at_anniversary,monthly_churn_rate,churn_at_anniversary
+before,6699,28,402,2,0.0041797283176593526,0.004975124378109453
+after,9740,40,754,3,0.004106776180698152,0.003978779840848806

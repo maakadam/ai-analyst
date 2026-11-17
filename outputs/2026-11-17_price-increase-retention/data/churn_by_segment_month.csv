@@ -1,0 +1,100 @@
+due_month,dimension,segment,renewals_due,missed_renewals
+2025-11-01T00:00:00Z,country,EU,794,10
+2025-12-01T00:00:00Z,country,EU,846,7
+2026-01-01T00:00:00Z,country,EU,864,15
+2026-02-01T00:00:00Z,country,EU,808,9
+2026-03-01T00:00:00Z,country,EU,936,13
+2026-04-01T00:00:00Z,country,EU,886,30
+2026-05-01T00:00:00Z,country,EU,879,43
+2026-06-01T00:00:00Z,country,EU,813,42
+2026-07-01T00:00:00Z,country,EU,802,36
+2025-11-01T00:00:00Z,country,India,774,10
+2025-12-01T00:00:00Z,country,India,813,12
+2026-01-01T00:00:00Z,country,India,847,7
+2026-02-01T00:00:00Z,country,India,808,11
+2026-03-01T00:00:00Z,country,India,909,13
+2026-04-01T00:00:00Z,country,India,870,25
+2026-05-01T00:00:00Z,country,India,869,52
+2026-06-01T00:00:00Z,country,India,793,42
+2026-07-01T00:00:00Z,country,India,771,36
+2025-11-01T00:00:00Z,country,Rest,807,10
+2025-12-01T00:00:00Z,country,Rest,855,12
+2026-01-01T00:00:00Z,country,Rest,899,23
+2026-02-01T00:00:00Z,country,Rest,824,12
+2026-03-01T00:00:00Z,country,Rest,957,18
+2026-04-01T00:00:00Z,country,Rest,914,40
+2026-05-01T00:00:00Z,country,Rest,905,59
+2026-06-01T00:00:00Z,country,Rest,815,40
+2026-07-01T00:00:00Z,country,Rest,802,40
+2025-11-01T00:00:00Z,country,US,1628,21
+2025-12-01T00:00:00Z,country,US,1728,15
+2026-01-01T00:00:00Z,country,US,1797,27
+2026-02-01T00:00:00Z,country,US,1652,22
+2026-03-01T00:00:00Z,country,US,1925,26
+2026-04-01T00:00:00Z,country,US,1832,45
+2026-05-01T00:00:00Z,country,US,1850,67
+2026-06-01T00:00:00Z,country,US,1720,63
+2026-07-01T00:00:00Z,country,US,1716,61
+2025-11-01T00:00:00Z,device_type,Android,1329,24
+2025-12-01T00:00:00Z,device_type,Android,1409,12
+2026-01-01T00:00:00Z,device_type,Android,1486,24
+2026-02-01T00:00:00Z,device_type,Android,1370,13
+2026-03-01T00:00:00Z,device_type,Android,1595,20
+2026-04-01T00:00:00Z,device_type,Android,1525,41
+2026-05-01T00:00:00Z,device_type,Android,1539,73
+2026-06-01T00:00:00Z,device_type,Android,1411,64
+2026-07-01T00:00:00Z,device_type,Android,1393,74
+2025-11-01T00:00:00Z,device_type,iOS,1371,6
+2025-12-01T00:00:00Z,device_type,iOS,1444,15
+2026-01-01T00:00:00Z,device_type,iOS,1501,16
+2026-02-01T00:00:00Z,device_type,iOS,1425,13
+2026-03-01T00:00:00Z,device_type,iOS,1624,21
+2026-04-01T00:00:00Z,device_type,iOS,1562,40
+2026-05-01T00:00:00Z,device_type,iOS,1564,64
+2026-06-01T00:00:00Z,device_type,iOS,1458,50
+2026-07-01T00:00:00Z,device_type,iOS,1457,36
+2025-11-01T00:00:00Z,device_type,Web,1303,21
+2025-12-01T00:00:00Z,device_type,Web,1389,19
+2026-01-01T00:00:00Z,device_type,Web,1420,32
+2026-02-01T00:00:00Z,device_type,Web,1297,28
+2026-03-01T00:00:00Z,device_type,Web,1508,29
+2026-04-01T00:00:00Z,device_type,Web,1415,59
+2026-05-01T00:00:00Z,device_type,Web,1400,84
+2026-06-01T00:00:00Z,device_type,Web,1272,73
+2026-07-01T00:00:00Z,device_type,Web,1241,63
+2025-11-01T00:00:00Z,tenure_band,12 to 24 months,1278,10
+2025-12-01T00:00:00Z,tenure_band,12 to 24 months,1362,22
+2026-01-01T00:00:00Z,tenure_band,12 to 24 months,1360,23
+2026-02-01T00:00:00Z,tenure_band,12 to 24 months,1241,14
+2026-03-01T00:00:00Z,tenure_band,12 to 24 months,1395,15
+2026-04-01T00:00:00Z,tenure_band,12 to 24 months,1387,31
+2026-05-01T00:00:00Z,tenure_band,12 to 24 months,1450,39
+2026-06-01T00:00:00Z,tenure_band,12 to 24 months,1378,35
+2026-07-01T00:00:00Z,tenure_band,12 to 24 months,1411,38
+2025-11-01T00:00:00Z,tenure_band,6 to 12 months,834,15
+2025-12-01T00:00:00Z,tenure_band,6 to 12 months,890,4
+2026-01-01T00:00:00Z,tenure_band,6 to 12 months,924,16
+2026-02-01T00:00:00Z,tenure_band,6 to 12 months,822,10
+2026-03-01T00:00:00Z,tenure_band,6 to 12 months,847,19
+2026-04-01T00:00:00Z,tenure_band,6 to 12 months,715,35
+2026-05-01T00:00:00Z,tenure_band,6 to 12 months,682,63
+2026-06-01T00:00:00Z,tenure_band,6 to 12 months,633,43
+2026-07-01T00:00:00Z,tenure_band,6 to 12 months,643,47
+2025-11-01T00:00:00Z,tenure_band,over 24 months,1271,16
+2025-12-01T00:00:00Z,tenure_band,over 24 months,1377,11
+2026-01-01T00:00:00Z,tenure_band,over 24 months,1467,17
+2026-02-01T00:00:00Z,tenure_band,over 24 months,1388,16
+2026-03-01T00:00:00Z,tenure_band,over 24 months,1628,20
+2026-04-01T00:00:00Z,tenure_band,over 24 months,1647,35
+2026-05-01T00:00:00Z,tenure_band,over 24 months,1773,69
+2026-06-01T00:00:00Z,tenure_band,over 24 months,1765,69
+2026-07-01T00:00:00Z,tenure_band,over 24 months,1870,75
+2025-11-01T00:00:00Z,tenure_band,under 6 months,620,10
+2025-12-01T00:00:00Z,tenure_band,under 6 months,613,9
+2026-01-01T00:00:00Z,tenure_band,under 6 months,656,16
+2026-02-01T00:00:00Z,tenure_band,under 6 months,641,14
+2026-03-01T00:00:00Z,tenure_band,under 6 months,857,16
+2026-04-01T00:00:00Z,tenure_band,under 6 months,753,39
+2026-05-01T00:00:00Z,tenure_band,under 6 months,598,50
+2026-06-01T00:00:00Z,tenure_band,under 6 months,365,40
+2026-07-01T00:00:00Z,tenure_band,under 6 months,167,13
