@@ -184,49 +184,101 @@ rd.to_csv(DATA / "churn_by_region_device.csv", index=False)
 print("Region and device (context): " + "; ".join(
     f"{r.group} +{r.change_pp:.1f} pp" for _, r in rd.iterrows()))
 
-# ---- Money: keep $12 against roll back to $10, 12 months, per segment --------------------------
-# Base: renewals due in July 2026, the latest closed month, as the current paying base per segment.
-# Assumes the whole churn rise is caused by the price, so a rollback returns churn to its before rate.
-# New subscribers use the pre-March starters' early-renewal rate as their $10 rate.
-jul = seg[seg["due_month"] == "2026-07"]
+# ---- Start cohorts: who moved, month by month since the rise ---------------------------------------
+# Groups a rule could target by start date. The 2025-09-17 bulk block is its own group (it sits in
+# different tenure bands before and after March). "new" started at $12 from 2026-03-01.
+COHORT_GROUP = {
+    "2022-H1": "started 2022 to 2023", "2022-H2": "started 2022 to 2023",
+    "2023-H1": "started 2022 to 2023", "2023-H2": "started 2022 to 2023",
+    "2024-H1": "started 2024", "2024-H2": "started 2024",
+    "2025-H1": "started 2025 (not the block)", "2025-H2": "started 2025 (not the block)",
+    "2025-09-17 block": "2025-09-17 block",
+    "2026-01 to 02": "started Jan to Feb 2026",
+    "new (from 2026-03)": "new (started at $12)",
+}
+GROUPS = list(dict.fromkeys(COHORT_GROUP.values()))
+coh = read("renewals_by_start_cohort")
+show("start cohorts add to month totals (renewals due)",
+     parts_sum_to_total(coh["renewals_due"], p["renewals_due"].sum(), tolerance=0))
+show("start cohorts add to month totals (missed)",
+     parts_sum_to_total(coh["missed_renewals"], p["missed_renewals"].sum(), tolerance=0))
+coh["period"] = coh["due_month"].map(period)
+coh["group"] = coh["start_cohort"].map(COHORT_GROUP)
+coh_half = before_after(coh, ["start_cohort"])
+coh_half.to_csv(DATA / "churn_by_start_cohort.csv", index=False)
+coh_month = rates(coh, ["group", "due_month"])
+coh_month.to_csv(DATA / "churn_by_group_and_month.csv", index=False)
+print("\nStart cohorts (before -> after, pp)")
+for _, r in coh_half.iterrows():
+    print(f"  {r.start_cohort:20s} {r.churn_rate_before:.2%} -> {r.churn_rate_after:.2%}  {r.change_pp:+.2f} pp")
+print("Churn by group and month since the rise (Mar, Apr, May, Jun, Jul)")
+for g in GROUPS:
+    m = coh_month[(coh_month["group"] == g) & (coh_month["due_month"] >= "2026-03")]
+    print(f"  {g:30s} " + "  ".join(f"{x:.1%}" for x in m["churn_rate"]))
+
+# ---- Money: keep $12 against roll back to $10, per group -----------------------------------------
+# Rates per group: $10 = Nov 2025 to Feb 2026; $12 settled = May to Jul 2026 (main case, after the
+# reaction set in); $12 average = Mar to Jul 2026 (includes the March renewal, before churn rose).
+# New subscribers and Jan to Feb 2026 starters have little or no $10 history at the same stage, so
+# their $10 rate is the pre-March starters' first-three-renewals rate (like for like, block left out).
+# Base: renewals due in July 2026, the latest closed month. Assumes the whole churn rise is caused by
+# the price, so a rollback returns each group to its $10 rate.
+def group_rate(df):
+    return df["missed_renewals"].sum() / df["renewals_due"].sum()
+
+
 rows = []
-for band in order:
-    r = existing.set_index("tenure_band").loc[band]
-    base = jul[(jul["start_group"] == "existing") & (jul["tenure_band"] == band)]["renewals_due"].sum()
-    rows.append(("existing, " + band, base, r.churn_rate_before, r.churn_rate_after))
-base_new = jul[jul["start_group"] == "new"]["renewals_due"].sum()
-rows.append(("new (started at $12)", base_new, e.churn_rate_before, e.churn_rate_after))
-money = pd.DataFrame(rows, columns=["segment", "base_jul_2026", "churn_at_10", "churn_at_12"])
-# Sensitivity: churn kept rising after March, so also use May to July only as the $12 rate.
-late = seg[seg["due_month"] >= "2026-05"]
-late_existing = rates(late[late["start_group"] == "existing"], ["tenure_band"]).set_index("tenure_band")
-late_new = rates(early[(early["start_group"] == "new") & (early["due_month"] >= "2026-05")].assign(g=1), ["g"])
-money["churn_at_12_may_jul"] = [late_existing.loc[b, "churn_rate"] for b in order] + [late_new["churn_rate"].iloc[0]]
-money["gain_from_keeping_12_may_jul"] = money.apply(
-    lambda r: revenue_12m(r.base_jul_2026, r.churn_at_12_may_jul, NEW_PRICE)
-    - revenue_12m(r.base_jul_2026, r.churn_at_10, OLD_PRICE), axis=1)
-money["revenue_12m_keep_12"] = money.apply(lambda r: revenue_12m(r.base_jul_2026, r.churn_at_12, NEW_PRICE), axis=1)
-money["revenue_12m_rollback_10"] = money.apply(lambda r: revenue_12m(r.base_jul_2026, r.churn_at_10, OLD_PRICE), axis=1)
-money["gain_from_keeping_12"] = money["revenue_12m_keep_12"] - money["revenue_12m_rollback_10"]
+for g in GROUPS:
+    d = coh[coh["group"] == g]
+    young = g in ("new (started at $12)", "started Jan to Feb 2026")
+    c0 = e.churn_rate_before if young else group_rate(d[d["period"] == "before"])
+    rows.append({
+        "group": g,
+        "base_jul_2026": d.loc[d["due_month"] == "2026-07", "renewals_due"].sum(),
+        "churn_at_10": c0,
+        "churn_at_10_source": "pre-March starters, first three renewals" if young else "own, Nov 2025 to Feb 2026",
+        "churn_at_12_settled": group_rate(d[d["due_month"] >= "2026-05"]),
+        "churn_at_12_mar_jul": group_rate(d[d["period"] == "after"]),
+        # Observed so far: each renewal due Mar to Jul at $12 with the churn seen, against the same
+        # renewals at $10 with the $10 churn rate (one month each, no compounding).
+        "observed_mar_jul_at_12": ((d.loc[d["period"] == "after", "renewals_due"]
+                                    - d.loc[d["period"] == "after", "missed_renewals"]) * NEW_PRICE).sum(),
+        "counterfactual_mar_jul_at_10": (d.loc[d["period"] == "after", "renewals_due"] * (1 - c0) * OLD_PRICE).sum(),
+    })
+money = pd.DataFrame(rows)
+money["observed_gain_mar_jul"] = money["observed_mar_jul_at_12"] - money["counterfactual_mar_jul_at_10"]
+money["rollback_10_12m"] = money.apply(lambda r: revenue_12m(r.base_jul_2026, r.churn_at_10, OLD_PRICE), axis=1)
+money["keep_12_12m_settled"] = money.apply(lambda r: revenue_12m(r.base_jul_2026, r.churn_at_12_settled, NEW_PRICE), axis=1)
+money["keep_12_12m_mar_jul"] = money.apply(lambda r: revenue_12m(r.base_jul_2026, r.churn_at_12_mar_jul, NEW_PRICE), axis=1)
+money["gain_12m_settled"] = money["keep_12_12m_settled"] - money["rollback_10_12m"]
+money["gain_12m_mar_jul"] = money["keep_12_12m_mar_jul"] - money["rollback_10_12m"]
 money["breakeven_churn_at_12"] = money["churn_at_10"].map(breakeven_churn)
-money["headroom_pp"] = (money["breakeven_churn_at_12"] - money["churn_at_12"]) * 100
-money.to_csv(DATA / "revenue_12m_keep_vs_rollback.csv", index=False)
-show("segment bases add to July 2026 renewals due",
-     parts_sum_to_total(money["base_jul_2026"], p.loc["2026-07", "renewals_due"], tolerance=0))
-print("\n12-month revenue, keep $12 vs roll back to $10 (July 2026 base)")
+money["headroom_pp_settled"] = (money["breakeven_churn_at_12"] - money["churn_at_12_settled"]) * 100
+total = money[["base_jul_2026", "observed_mar_jul_at_12", "counterfactual_mar_jul_at_10", "observed_gain_mar_jul",
+               "rollback_10_12m", "keep_12_12m_settled", "keep_12_12m_mar_jul", "gain_12m_settled",
+               "gain_12m_mar_jul"]].sum()
+money = pd.concat([money, pd.DataFrame([{"group": "all monthly", **total.to_dict()}])], ignore_index=True)
+money.to_csv(DATA / "revenue_keep_vs_rollback_by_group.csv", index=False)
+show("group bases add to July 2026 renewals due",
+     parts_sum_to_total(money.loc[money["group"] != "all monthly", "base_jul_2026"],
+                        p.loc["2026-07", "renewals_due"], tolerance=0))
+print("\nKeep $12 minus roll back to $10, by group (July 2026 base)")
 for _, r in money.iterrows():
-    print(f"  {r.segment:28s} base {r.base_jul_2026:5,.0f}  churn {r.churn_at_10:.2%} -> {r.churn_at_12:.2%}  "
-          f"keep ${r.revenue_12m_keep_12:,.0f} vs rollback ${r.revenue_12m_rollback_10:,.0f}: "
-          f"{r.gain_from_keeping_12:+,.0f}; break-even churn {r.breakeven_churn_at_12:.2%} "
-          f"({r.headroom_pp:+.2f} pp headroom); May-Jul churn {r.churn_at_12_may_jul:.2%}: "
-          f"{r.gain_from_keeping_12_may_jul:+,.0f}")
-tot = money[["base_jul_2026", "revenue_12m_keep_12", "revenue_12m_rollback_10", "gain_from_keeping_12",
-             "gain_from_keeping_12_may_jul"]].sum()
-print(f"  {'all monthly':28s} base {tot.base_jul_2026:5,.0f}  keep ${tot.revenue_12m_keep_12:,.0f} vs rollback "
-      f"${tot.revenue_12m_rollback_10:,.0f}: {tot.gain_from_keeping_12:+,.0f}; May-Jul churn: "
-      f"{tot.gain_from_keeping_12_may_jul:+,.0f}")
+    rates_txt = ("" if r.group == "all monthly" else
+                 f"churn {r.churn_at_10:.2%} -> settled {r.churn_at_12_settled:.2%} (Mar-Jul {r.churn_at_12_mar_jul:.2%}), "
+                 f"break-even {r.breakeven_churn_at_12:.2%}; ")
+    print(f"  {r.group:30s} base {r.base_jul_2026:5,.0f}  {rates_txt}observed Mar-Jul {r.observed_gain_mar_jul:+,.0f}; "
+          f"12 months settled {r.gain_12m_settled:+,.0f}, Mar-Jul rate {r.gain_12m_mar_jul:+,.0f}")
 
 # ---- Charts -------------------------------------------------------------------------------------
+def relabel(fig, values, fmt):
+    """Rewrite the value labels on a bar chart with a format the helper does not offer."""
+    ax = fig.axes[0]
+    for t, v in zip([t for t in ax.texts], values):
+        t.set_text(fmt.format(v))
+    return fig
+
+
 labels = monthly["due_month"].tolist()
 charts.save(charts.line(
     labels, {"monthly plan": (monthly["churn_rate"] * 100).round(2).tolist(),
@@ -234,19 +286,35 @@ charts.save(charts.line(
     "Monthly-plan churn held in March, then rose to about 5% a month from May 2026; annual stayed flat",
     highlight="monthly plan", ylabel="Churn rate per month (%)", source=SOURCE), CHARTS / "churn_by_month.png")
 
-seg_labels = [b for b in order] + ["new (started at $12)"]
-pp = existing["change_pp"].tolist() + [e.change_pp]
-top = seg_labels[pp.index(max(pp))]
-charts.save(charts.bar(
-    seg_labels, [round(x, 1) for x in pp],
-    f"Churn rose in every group, most for {top} subscribers",
-    highlight=top, ylabel="Change in monthly churn, before to after (pp)", source=SOURCE,
-    horizontal=True), CHARTS / "churn_change_by_segment.png")
+after_months = [m for m in labels if m >= "2026-02"]
+series = {}
+for g in GROUPS:
+    m = coh_month[coh_month["group"] == g].set_index("due_month")["churn_rate"]
+    if all(x in m.index for x in after_months):
+        series[g] = (m.reindex(after_months) * 100).round(2).tolist()
+charts.save(charts.line(
+    after_months, series,
+    "Churn rose in every start group except 2024 starters and stayed well above its earlier level through July",
+    highlight="started 2024",
+    ylabel="Churn rate per month (%)", source=SOURCE), CHARTS / "churn_by_group_and_month.png")
 
-charts.save(charts.bar(
-    money["segment"].tolist(), money["gain_from_keeping_12"].round(0).tolist(),
-    "Over 12 months, $10 would earn more from new and under-12-month subscribers; $12 wins at 12 to 24 months",
-    highlight=money.loc[money["gain_from_keeping_12"].idxmin(), "segment"],
-    ylabel="12-month revenue, keep $12 minus rollback ($)", source=SOURCE, horizontal=True),
-    CHARTS / "revenue_keep_vs_rollback.png")
+ch = coh_half.set_index("start_cohort")
+seg_rows = [(f"existing, {b}", existing_noblock.set_index("tenure_band").loc[b, "change_pp"]) for b in order]
+seg_rows += [("2025-09-17 block", ch.loc["2025-09-17 block", "change_pp"]), ("new (started at $12)", e.change_pp)]
+names, pp = [r[0] for r in seg_rows], [r[1] for r in seg_rows]
+top = names[pp.index(max(pp))]
+pd.DataFrame(seg_rows, columns=["segment", "change_pp"]).to_csv(DATA / "churn_change_by_segment.csv", index=False)
+fig = charts.bar(names, [round(x, 2) for x in pp],
+                 f"Churn rose in every tenure band, most for {top} subscribers (block shown on its own)",
+                 highlight=top, ylabel="Change in monthly churn, before to after (pp)", source=SOURCE,
+                 horizontal=True)
+charts.save(relabel(fig, pp, "{:+.1f} pp"), CHARTS / "churn_change_by_segment.png")
+
+mg = money[money["group"] != "all monthly"]
+fig = charts.bar(mg["group"].tolist(), mg["gain_12m_settled"].round(0).tolist(),
+                 "At settled churn, only 2024 starters earn more at $12 over 12 months",
+                 highlight="started 2024", ylabel="12-month revenue, keep $12 minus roll back to $10 ($)",
+                 source=SOURCE, horizontal=True)
+fig.axes[0].margins(x=0.25)
+charts.save(relabel(fig, mg["gain_12m_settled"].tolist(), "{:+,.0f}"), CHARTS / "revenue_keep_vs_rollback.png")
 print("\nCharts saved to", CHARTS)
