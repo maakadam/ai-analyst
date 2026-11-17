@@ -1,0 +1,2 @@
+all,churn_rate_after,churn_rate_before,missed_renewals_after,missed_renewals_before,renewals_due_after,renewals_due_before,change_pp,change_relative_pct
+all,0.04142337776798502,0.015612449799196787,1128.0,311.0,27231.0,19920.0,2.5810927968788233,165.32272834027702

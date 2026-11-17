@@ -1,0 +1,51 @@
+due_month,tenure_band,start_group,block_2025_09_17,renewals_due,missed_renewals
+2025-11,12 to 24 months,existing,False,1244,11
+2025-11,6 to 12 months,existing,False,777,14
+2025-11,over 24 months,existing,False,1203,15
+2025-11,under 6 months,existing,False,779,11
+2025-11,under 6 months,existing,True,827,28
+2025-12,12 to 24 months,existing,False,1319,23
+2025-12,6 to 12 months,existing,False,846,2
+2025-12,over 24 months,existing,False,1300,9
+2025-12,under 6 months,existing,False,777,12
+2025-12,under 6 months,existing,True,799,15
+2026-01,12 to 24 months,existing,False,1327,25
+2026-01,6 to 12 months,existing,False,891,17
+2026-01,over 24 months,existing,False,1377,13
+2026-01,under 6 months,existing,False,812,17
+2026-01,under 6 months,existing,True,784,18
+2026-02,12 to 24 months,existing,False,1211,15
+2026-02,6 to 12 months,existing,False,820,10
+2026-02,over 24 months,existing,False,1302,14
+2026-02,under 6 months,existing,False,759,15
+2026-02,under 6 months,existing,True,766,27
+2026-03,12 to 24 months,existing,False,1372,16
+2026-03,6 to 12 months,existing,False,898,17
+2026-03,over 24 months,existing,False,1524,18
+2026-03,under 6 months,existing,False,933,19
+2026-03,under 6 months,existing,True,739,13
+2026-03,under 6 months,new,False,6,0
+2026-04,12 to 24 months,existing,False,1333,26
+2026-04,6 to 12 months,existing,False,795,37
+2026-04,6 to 12 months,existing,True,726,34
+2026-04,over 24 months,existing,False,1560,35
+2026-04,under 6 months,existing,False,814,42
+2026-04,under 6 months,new,False,197,11
+2026-05,12 to 24 months,existing,False,1412,34
+2026-05,6 to 12 months,existing,False,690,50
+2026-05,6 to 12 months,existing,True,692,53
+2026-05,over 24 months,existing,False,1667,67
+2026-05,under 6 months,existing,False,734,70
+2026-05,under 6 months,new,False,417,39
+2026-06,12 to 24 months,existing,False,1361,30
+2026-06,6 to 12 months,existing,False,593,35
+2026-06,6 to 12 months,existing,True,639,45
+2026-06,over 24 months,existing,False,1657,69
+2026-06,under 6 months,existing,False,530,53
+2026-06,under 6 months,new,False,540,47
+2026-07,12 to 24 months,existing,False,1399,30
+2026-07,6 to 12 months,existing,False,595,42
+2026-07,6 to 12 months,existing,True,594,34
+2026-07,over 24 months,existing,False,1762,74
+2026-07,under 6 months,existing,False,335,27
+2026-07,under 6 months,new,False,717,61

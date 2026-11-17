@@ -1,0 +1,2 @@
+group,churn_rate_after,churn_rate_before,missed_renewals_after,missed_renewals_before,renewals_due_after,renewals_due_before,change_pp,change_relative_pct
+first three renewals,0.08318687756297598,0.018758085381630013,142.0,29.0,1707.0,1546.0,6.442879218134596,343.4721128012444

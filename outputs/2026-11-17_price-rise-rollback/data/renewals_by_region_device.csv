@@ -1,0 +1,15 @@
+period,country,device_type,renewals_due,missed_renewals
+after,all,Android,9233,402
+after,all,iOS,9554,284
+after,all,Web,8444,442
+after,EU,all,5387,239
+after,India,all,5356,243
+after,Rest,all,5461,272
+after,US,all,11027,374
+before,all,Android,6646,99
+before,all,iOS,6898,71
+before,all,Web,6376,141
+before,EU,all,3979,60
+before,India,all,3899,50
+before,Rest,all,4045,84
+before,US,all,7997,117
