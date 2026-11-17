@@ -14,7 +14,8 @@ Why the skills work the way they do. The goal is a general analyst assistant for
 - **Population and Additional context.** Who the decision affects, any narrowing, and other changes in the period are agreed up front, not discovered halfway through.
 - **Like with like.** Frame suggests the splits that make a fair comparison (such as tenure and start cohort) before anyone has to ask.
 - **Levers before splits.** Frame asks which groups the business can actually treat differently, since a result about a group nobody can act on cannot inform the decision.
-- **A peer check.** A fresh agent hears a short pitch and replies "makes sense" or with at most three questions: a cheap second opinion.
+- **Like with like in time.** Frame asks for comparisons that match in time as well as in group, and names what they cannot rule out. In the March 2026 price run, new subscribers' later months were compared with earlier joiners' earlier months, and the gap that drove the recommendation vanished in the same months.
+- **A peer check.** A fresh agent hears a short pitch and replies "makes sense" or with at most three questions: a cheap second opinion. Frame answers each point (what it would add, or why it can't) and the user picks "Approve with these additions" or "Approve as drafted", so taking the peer's advice is one choice, not a typed request.
 - **Money at stake.** When the decision has a money side, frame suggests sizing it for the whole affected group. It sits in frame rather than analyse, so analyse stays close to the course version.
 
 ## Profile
@@ -36,6 +37,7 @@ Why the skills work the way they do. The goal is a general analyst assistant for
 - **Small fix vs Needs the user.** A question the data can answer is never handed to the user; only judgement calls are.
 - **Recheck mode.** A fix that adds or changes a number the recommendation rests on goes back through validate, so the brief never leans on a number no reviewer saw. A recheck looks only at what changed, so reviews converge instead of starting over.
 - **Ranked and capped.** At most five findings that change the verdict, a claim or how sure the brief can be; the rest fold into one Note. A senior reviewer ranks, not lists.
+- **List what else differs.** For each headline comparison validate lists what differs besides the thing tested (period, stage, mix, nearby events); an uncontrolled, unnamed difference is a finding. Three rounds of review on the price run checked reruns and totals but missed a comparison across different months.
 - **Checks that apply.** Targeting, money and projection checks run only when the decision targets groups, has a money side or rests on a projection, so a plain "what happened" question is not judged as a pricing decision.
 - **Learning across questions.** Validate proposes lasting source-data facts as quirk lines; the user decides whether they go into `quirks.md`, as with profile.
 - **The rerun starts from the saved SQL.** Validate reruns each `sql/*.sql` through `course-db`, then a copy of `analysis.py` on those rows, and compares every CSV, so a query, a hand-copied row or the pandas step that no longer matches shows up. It reads AGENTS.md itself, since it runs in its own context.
